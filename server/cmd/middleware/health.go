@@ -1,25 +1,22 @@
 package middleware
-package middleware
 
 import (
 	"shbs-server/pkg/services"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 )
 
-// HealthCheck registers two probes:
-//   - GET /live  — always returns 200 (process is alive)
-//   - GET /ready — returns 200 only when the database is reachable
-func HealthCheck(database *services.Database) fiber.Handler {
-	return healthcheck.New(healthcheck.Config{
-		LivenessProbe: func(c *fiber.Ctx) bool {
-			return true
-		},
-		LivenessEndpoint: "/live",
-		ReadinessProbe: func(c *fiber.Ctx) bool {
-			return database.Ready()
-		},
-		ReadinessEndpoint: "/ready",
+// RegisterHealthChecks attaches the root-level liveness and readiness probes.
+func RegisterHealthChecks(app fiber.Router, database *services.Database) {
+	app.Get("/live", func(c *fiber.Ctx) error {
+		return c.SendStatus(fiber.StatusOK)
+	})
+
+	app.Get("/ready", func(c *fiber.Ctx) error {
+		if database.Ready() {
+			return c.SendStatus(fiber.StatusOK)
+		}
+
+		return c.SendStatus(fiber.StatusServiceUnavailable)
 	})
 }
