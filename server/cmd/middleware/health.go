@@ -1,5 +1,4 @@
 package middleware
-package middleware
 
 import (
 	"shbs-server/pkg/services"
