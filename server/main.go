@@ -7,13 +7,11 @@ import (
 	"time"
 
 	"shbs-server/cmd/middleware"
-	_ "shbs-server/docs"
 	"shbs-server/pkg/config"
 	"shbs-server/pkg/services"
 	"shbs-server/pkg/util"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/swagger"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
@@ -58,10 +56,12 @@ func main() {
 	app.Use(middleware.RateLimiter())
 
 	// ── Health probes ─────────────────────────────────────────────────────────
-	app.Use(middleware.HealthCheck(database))
+	middleware.RegisterHealthChecks(app, database)
 
 	// ── Swagger UI ────────────────────────────────────────────────────────────
-	app.Get("/swagger/*", swagger.HandlerDefault)
+	// The /swagger/* route is registered once the docs package is generated via
+	// `make generate-api`. Phase 0 omits it to keep the binary free of the
+	// swag-generated dependency.
 
 	// ── API routes ────────────────────────────────────────────────────────────
 	api := app.Group("/api/v1")
