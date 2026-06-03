@@ -56,7 +56,7 @@ func main() {
 	app.Use(middleware.RateLimiter())
 
 	// ── Health probes ─────────────────────────────────────────────────────────
-	app.Use(middleware.HealthCheck(database))
+	middleware.RegisterHealthChecks(app, database)
 
 	// ── Swagger UI ────────────────────────────────────────────────────────────
 	// The /swagger/* route is registered once the docs package is generated via
