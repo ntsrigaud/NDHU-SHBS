@@ -1,0 +1,37 @@
+http:
+  routers:
+    api:
+      rule: "PathPrefix(`/api`) || PathPrefix(`/swagger`) || Path(`/live`) || Path(`/ready`)"
+      service: api
+
+    ai:
+      rule: "PathPrefix(`/ai`)"
+      middlewares:
+        - ai-strip
+      service: ai
+
+    client:
+      rule: "PathPrefix(`/`)"
+      service: client
+
+  middlewares:
+    ai-strip:
+      stripPrefix:
+        prefixes:
+          - /ai
+
+  services:
+    api:
+      loadBalancer:
+        servers:
+          - url: "http://api:8080"
+
+    ai:
+      loadBalancer:
+        servers:
+          - url: "http://ai:8000"
+
+    client:
+      loadBalancer:
+        servers:
+          - url: "http://client:3000"

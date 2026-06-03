@@ -1,0 +1,12 @@
+.env
+/main
+/migrate
+/shbs-server
+*.test
+*.out
+coverage.*
+docs/swagger.json
+docs/swagger.yaml
+docs/openapi.json
+docs/openapi.yaml
+docs/docs.go

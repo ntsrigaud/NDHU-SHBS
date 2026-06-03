@@ -1,0 +1,112 @@
+services:
+  # ──────────────────────────────────────────────────────────────
+  # Reverse proxy
+  # ──────────────────────────────────────────────────────────────
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.insecure=true"
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8081:8080" # Traefik dashboard
+    volumes:
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+    networks:
+      - app-network
+
+  # ──────────────────────────────────────────────────────────────
+  # Database
+  # ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-shbs}
+    healthcheck:
+      test: "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-shbs} -h localhost"
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # ──────────────────────────────────────────────────────────────
+  # Go API server
+  # ──────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./server
+      target: production
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      PORT: "8080"
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/shbs?sslmode=disable}
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai:8000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/swagger`) || Path(`/live`) || Path(`/ready`)"
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
+    networks:
+      - app-network
+
+  # ──────────────────────────────────────────────────────────────
+  # Python AI microservice
+  # ──────────────────────────────────────────────────────────────
+  ai:
+    build:
+      context: ./ai-service
+      target: production
+    restart: unless-stopped
+    env_file:
+      - ./ai-service/.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ai.rule=PathPrefix(`/ai`)"
+      - "traefik.http.middlewares.ai-strip.stripprefix.prefixes=/ai"
+      - "traefik.http.routers.ai.middlewares=ai-strip"
+      - "traefik.http.services.ai.loadbalancer.server.port=8000"
+    networks:
+      - app-network
+
+  # ──────────────────────────────────────────────────────────────
+  # Next.js client
+  # ──────────────────────────────────────────────────────────────
+  client:
+    build:
+      context: ./client
+      target: production
+    restart: unless-stopped
+    env_file:
+      - ./client/.env
+    depends_on:
+      - api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.client.rule=PathPrefix(`/`)"
+      - "traefik.http.services.client.loadbalancer.server.port=3000"
+    networks:
+      - app-network
+
+volumes:
+  postgres-data:
+
+networks:
+  app-network:
+    driver: bridge
