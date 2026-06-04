@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/lib/store';
 import { clearCredentials } from '@/slices/authSlice';
 import { clearCart } from '@/slices/cartSlice';
@@ -14,15 +15,23 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
 
 export default function Navbar() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const user = useAppSelector((s) => s.auth.user);
   const cartCount = useAppSelector((s) => s.cart.items.length);
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await apiFetch('/auth/logout', { method: 'POST' });
+    } catch {
+      // proceed with local logout even if the server call fails
+    }
     dispatch(clearCredentials());
     dispatch(clearCart());
+    router.push('/login');
   }
 
   return (
