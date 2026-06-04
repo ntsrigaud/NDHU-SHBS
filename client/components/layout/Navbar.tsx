@@ -14,14 +14,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, MessageSquare } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { useUnreadCount } from '@/hooks/useMessages';
 
 export default function Navbar() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const user = useAppSelector((s) => s.auth.user);
   const cartCount = useAppSelector((s) => s.cart.items.length);
+  const { data: unread } = useUnreadCount();
 
   async function handleLogout() {
     try {
@@ -44,6 +46,17 @@ export default function Navbar() {
         <nav className="flex items-center gap-2">
           {user ? (
             <>
+              <Link href="/messages" className="relative">
+                <Button variant="ghost" size="icon">
+                  <MessageSquare className="h-5 w-5" />
+                  {(unread?.count ?? 0) > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                      {unread!.count}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+
               <Link href="/cart" className="relative">
                 <Button variant="ghost" size="icon">
                   <ShoppingCart className="h-5 w-5" />
@@ -69,6 +82,9 @@ export default function Navbar() {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/orders">My Orders</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/messages">Messages</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive">
