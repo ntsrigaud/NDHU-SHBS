@@ -68,6 +68,9 @@ func TestImage_S3KeyNotInJSON(t *testing.T) {
 	if _, ok := raw["s3_key"]; ok {
 		t.Error("s3_key must not appear in JSON output — internal storage key must stay server-side")
 	}
+	if _, ok := raw["S3Key"]; ok {
+		t.Error("S3Key must not appear in JSON output — internal storage key must stay server-side")
+	}
 	if _, ok := raw["cdn_url"]; !ok {
 		t.Error("cdn_url must appear in JSON output")
 	}
