@@ -30,12 +30,10 @@ jobs:
           - context: server
             image: server
             target: production
-          - context: client
-            image: client
-            target: production
           - context: ai-service
             image: ai
             target: production
+          # client is deployed to Vercel via deploy-client.yml — no Docker image needed.
 
     steps:
       - uses: actions/checkout@v4
