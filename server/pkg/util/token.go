@@ -1,8 +1,10 @@
 package util
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"time"
 
@@ -61,4 +63,32 @@ func DeleteExpiredVerificationTokens(db *sqlx.DB) {
 	if _, err := db.Exec(`DELETE FROM verification_tokens WHERE expires_at <= NOW()`); err != nil {
 		log.Printf("Error pruning expired verification tokens: %v", err)
 	}
+}
+
+// CreateVerificationToken generates a cryptographically random token, stores
+// its SHA-256 hash in the verification_tokens table, and returns the raw token
+// string to be embedded in the email link.
+//
+// The raw token is never stored — only the hash — so a DB breach cannot be
+// used to verify accounts or reset passwords without the original email.
+func CreateVerificationToken(db *sqlx.DB, userID uuid.UUID, tokenType string, ttl time.Duration) (string, error) {
+	// 32 random bytes → 64-char hex string. Enough entropy to be
+	// unguessable even if an attacker can enumerate valid user IDs.
+	raw := make([]byte, 32)
+	if _, err := rand.Read(raw); err != nil {
+		return "", fmt.Errorf("generate token bytes: %w", err)
+	}
+	rawToken := hex.EncodeToString(raw)
+	tokenHash := HashToken(rawToken)
+	expiresAt := time.Now().Add(ttl)
+
+	_, err := db.Exec(
+		`INSERT INTO verification_tokens (id, user_id, token_hash, type, expires_at)
+         VALUES ($1, $2, $3, $4, $5)`,
+		uuid.New(), userID, tokenHash, tokenType, expiresAt,
+	)
+	if err != nil {
+		return "", fmt.Errorf("insert verification token: %w", err)
+	}
+	return rawToken, nil
 }
