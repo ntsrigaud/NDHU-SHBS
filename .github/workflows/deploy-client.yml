@@ -46,7 +46,6 @@ jobs:
       # Pull environment variables and project settings from the Vercel API.
       # 'production' env is used for pushes to main; 'preview' for PRs.
       - name: Pull Vercel environment
-        working-directory: client
         run: |
           vercel pull --yes \
             --environment=${{ github.event_name == 'push' && 'production' || 'preview' }} \
@@ -55,7 +54,6 @@ jobs:
       # vercel build runs next build inside Vercel's build container, picking
       # up the env vars pulled above (including NEXT_PUBLIC_API_URL).
       - name: Build
-        working-directory: client
         run: |
           vercel build \
             ${{ github.event_name == 'push' && '--prod' || '' }} \
@@ -64,7 +62,6 @@ jobs:
       # Deploy the pre-built output and capture the deployment URL.
       - name: Deploy
         id: deploy
-        working-directory: client
         run: |
           url=$(vercel deploy --prebuilt \
             ${{ github.event_name == 'push' && '--prod' || '' }} \
