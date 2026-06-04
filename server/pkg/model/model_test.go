@@ -114,3 +114,30 @@ func TestVerificationTypeConstants(t *testing.T) {
 		}
 	}
 }
+
+func TestListingStatusConstants(t *testing.T) {
+	statuses := []string{
+		model.ListingStatusActive,
+		model.ListingStatusReserved,
+		model.ListingStatusSold,
+		model.ListingStatusDelisted,
+	}
+	for _, v := range statuses {
+		if v == "" {
+			t.Errorf("listing status constant must not be empty string")
+		}
+	}
+}
+
+func TestNotificationTypeConstants(t *testing.T) {
+	types := []string{
+		model.NotifTypeNewMessage,
+		model.NotifTypeOrderConfirmed,
+		model.NotifTypeListingSold,
+	}
+	for _, v := range types {
+		if v == "" {
+			t.Errorf("notification type constant must not be empty string")
+		}
+	}
+}
