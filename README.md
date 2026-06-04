@@ -126,5 +126,5 @@ NDHU-SHBS/
 ## Documentation
 
 - [Project Proposal](docs/project-proposal.md)
-- [Implementation Roadmap](docs/implemetation-roadmap.md)
+- [Implementation Roadmap](docs/implementation-roadmap.md)
 - API docs: `http://localhost:8080/swagger/` (when stack is running)
