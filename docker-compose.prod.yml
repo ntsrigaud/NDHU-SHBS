@@ -70,18 +70,7 @@ services:
     networks:
       - app-network
 
-  # ──────────────────────────────────────────────────────────────
-  # Next.js client — pre-built image from GHCR
-  # ──────────────────────────────────────────────────────────────
-  client:
-    image: ghcr.io/ntsrigaud/ndhu-shbs-client:latest
-    restart: unless-stopped
-    env_file:
-      - ./client/.env
-    depends_on:
-      - api
-    networks:
-      - app-network
+  # Next.js client is deployed to Vercel — not part of the host stack.
 
 volumes:
   postgres-data:
