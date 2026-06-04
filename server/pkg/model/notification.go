@@ -9,9 +9,9 @@ import (
 
 // Notification type values.
 const (
-	NotifTypeNewMessage    = "new_message"
+	NotifTypeNewMessage     = "new_message"
 	NotifTypeOrderConfirmed = "order_confirmed"
-	NotifTypeListingSold   = "listing_sold"
+	NotifTypeListingSold    = "listing_sold"
 )
 
 // Notification represents a row in the `notifications` table.
