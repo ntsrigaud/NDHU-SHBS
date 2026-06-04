@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
 
   if (isProtected) {
-    const token = request.cookies.get('token')?.value;
+    const token = request.cookies.get('jwt')?.value;
     if (!token) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('next', pathname);
