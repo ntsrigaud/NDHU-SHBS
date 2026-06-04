@@ -21,6 +21,8 @@ jobs:
   deploy:
     name: ${{ github.event_name == 'push' && 'Production' || 'Preview' }} → Vercel
     runs-on: ubuntu-latest
+    # Required: makes GitHub inject the secrets stored in the staging environment.
+    environment: staging
     permissions:
       # Needed to post the preview URL as a PR comment.
       pull-requests: write
