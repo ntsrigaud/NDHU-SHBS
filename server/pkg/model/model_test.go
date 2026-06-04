@@ -42,6 +42,9 @@ func TestUser_PasswordHashNotInJSON(t *testing.T) {
 	if _, ok := raw["password_hash"]; ok {
 		t.Error("password_hash must not appear in JSON output — OWASP A02 violation")
 	}
+	if _, ok := raw["PasswordHash"]; ok {
+		t.Error("PasswordHash must not appear in JSON output — OWASP A02 violation")
+	}
 }
 
 func TestImage_S3KeyNotInJSON(t *testing.T) {
