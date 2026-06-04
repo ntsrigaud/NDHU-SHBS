@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"shbs-server/cmd/controllers/auth"
 	"shbs-server/cmd/middleware"
 	"shbs-server/pkg/config"
 	"shbs-server/pkg/services"
@@ -75,11 +76,8 @@ func main() {
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", port)))
 }
 
-// registerRoutes attaches all controller groups. Controller packages will be
-// added in Phase 1 (auth), Phase 2 (listings), etc. The stubs below keep the
-// file compilable during Phase 0.
+// registerRoutes attaches all controller groups.
 func registerRoutes(api fiber.Router, db *sqlx.DB) {
-	// Phase 0 placeholder — controllers will be wired here in subsequent phases.
-	_ = api
-	_ = db
+	emailSvc := &services.EmailService{}
+	auth.Mount(api, db, emailSvc)
 }
