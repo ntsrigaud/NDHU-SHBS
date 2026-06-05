@@ -20,7 +20,6 @@ interface RegisterPayload {
 
 interface LoginResponse {
   user: User;
-  token: string;
   expires_at: string;
 }
 
