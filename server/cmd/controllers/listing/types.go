@@ -2,7 +2,10 @@ package listing
 
 import (
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/shopspring/decimal"
 )
 
@@ -16,12 +19,10 @@ type CreateListingRequest struct {
 	Price       decimal.Decimal `json:"price"`
 	Condition   string          `json:"condition"`
 	Description string          `json:"description"`
+	ImageIDs    []uuid.UUID     `json:"image_ids"`
 }
 
 // UpdateListingRequest is a partial update — only non-nil fields are applied.
-// The seller may update any field; the status field allows transitioning to
-// "delisted" (taking the listing down) but not directly to "sold" or "reserved"
-// (those are managed by the order/cart flow).
 type UpdateListingRequest struct {
 	Title       *string          `json:"title"`
 	Author      *string          `json:"author"`
@@ -32,6 +33,7 @@ type UpdateListingRequest struct {
 	Condition   *string          `json:"condition"`
 	Status      *string          `json:"status"`
 	Description *string          `json:"description"`
+	ImageIDs    *[]uuid.UUID     `json:"image_ids"`
 }
 
 // ListingsPage is the envelope returned by GET /listings.
@@ -42,23 +44,25 @@ type ListingsPage struct {
 	Limit int                 `json:"limit"`
 }
 
-// ListingWithImages enriches a BookListing with its image IDs in display order.
+// ListingWithImages enriches a BookListing with its image IDs and seller info.
 type ListingWithImages struct {
-	ID           interface{}   `json:"id"`
-	SellerID     interface{}   `json:"seller_id"`
-	Title        string        `json:"title"`
-	Author       string        `json:"author"`
-	ISBN         interface{}   `json:"isbn,omitempty"`
-	CourseCode   interface{}   `json:"course_code,omitempty"`
-	Department   interface{}   `json:"department,omitempty"`
-	Price        interface{}   `json:"price"`
-	Condition    string        `json:"condition"`
-	Status       string        `json:"status"`
-	Description  interface{}   `json:"description,omitempty"`
-	AIConfidence interface{}   `json:"ai_confidence,omitempty"`
-	ImageIDs     []interface{} `json:"image_ids"`
-	CreatedAt    interface{}   `json:"created_at"`
-	UpdatedAt    interface{}   `json:"updated_at"`
+	ID           uuid.UUID       `db:"id"            json:"id"`
+	SellerID     uuid.UUID       `db:"seller_id"     json:"seller_id"`
+	SellerName   string          `db:"seller_name"   json:"seller_name"`
+	SellerAvatar *string         `db:"seller_avatar" json:"seller_avatar,omitempty"`
+	Title        string          `db:"title"         json:"title"`
+	Author       string          `db:"author"        json:"author"`
+	ISBN         *string         `db:"isbn"          json:"isbn,omitempty"`
+	CourseCode   *string         `db:"course_code"   json:"course_code,omitempty"`
+	Department   *string         `db:"department"    json:"department,omitempty"`
+	Price        decimal.Decimal `db:"price"         json:"price"`
+	Condition    string          `db:"condition"     json:"condition"`
+	Status       string          `db:"status"        json:"status"`
+	Description  *string         `db:"description"   json:"description,omitempty"`
+	AIConfidence *float64        `db:"ai_confidence" json:"ai_confidence,omitempty"`
+	ImageURLs    pq.StringArray  `db:"image_urls"    json:"image_urls"`
+	CreatedAt    time.Time       `db:"created_at"    json:"created_at"`
+	UpdatedAt    time.Time       `db:"updated_at"    json:"updated_at"`
 }
 
 // validConditions contains the allowed values for Condition.
