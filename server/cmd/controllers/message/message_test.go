@@ -26,6 +26,7 @@ import (
 	"shbs-server/cmd/controllers/auth"
 	"shbs-server/cmd/controllers/listing"
 	"shbs-server/cmd/controllers/message"
+	"shbs-server/cmd/controllers/notification"
 	"shbs-server/cmd/middleware"
 	"shbs-server/pkg/services"
 	"shbs-server/pkg/util"
@@ -79,6 +80,7 @@ func TestMain(m *testing.M) {
 	auth.Mount(api, testDB, &services.EmailService{})
 	listing.Mount(api, testDB)
 	message.Mount(api, testDB)
+	notification.Mount(api, testDB)
 
 	os.Exit(m.Run())
 }
@@ -266,5 +268,18 @@ func TestMessaging_Flow(t *testing.T) {
 	msgs, _ = listBody["messages"].([]any)
 	if len(msgs) != 2 {
 		t.Fatalf("expected 2 messages in convo, got %d", len(msgs))
+	}
+
+	// 5. Verify Receiver (Seller) received a notification for the first message
+	res, err = testApp.Test(authReq("GET", "/api/v1/notifications", nil, sellerToken), -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertStatus(t, res, http.StatusOK)
+	var notifBody map[string]any
+	decodeBody(t, res, &notifBody)
+	notifs, _ := notifBody["notifications"].([]any)
+	if len(notifs) == 0 {
+		t.Fatal("expected at least 1 notification for seller")
 	}
 }

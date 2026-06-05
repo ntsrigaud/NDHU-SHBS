@@ -33,10 +33,10 @@ func HandleRegisterImage(db *sqlx.DB) fiber.Handler {
 			return fiber.NewError(fiber.StatusInternalServerError, "could not register image")
 		}
 
-		return c.Status(fiber.StatusCreated).JSON(ImageResponse{
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{"image": ImageResponse{
 			ID:     img.ID,
 			CdnURL: img.CdnURL,
-		})
+		}})
 	}
 }
 
@@ -53,9 +53,9 @@ func HandleGetImage(db *sqlx.DB) fiber.Handler {
 			return fiber.NewError(fiber.StatusNotFound, "image not found")
 		}
 
-		return c.JSON(ImageResponse{
+		return c.JSON(fiber.Map{"image": ImageResponse{
 			ID:     img.ID,
 			CdnURL: img.CdnURL,
-		})
+		}})
 	}
 }

@@ -201,10 +201,11 @@ func TestRegisterImage_Success(t *testing.T) {
 
 	var body map[string]any
 	decodeBody(t, res, &body)
-	if body["cdn_url"] != payload["cdn_url"] {
-		t.Fatalf("expected cdn_url %s, got %v", payload["cdn_url"], body["cdn_url"])
+	img, _ := body["image"].(map[string]any)
+	if img["cdn_url"] != payload["cdn_url"] {
+		t.Fatalf("expected cdn_url %s, got %v", payload["cdn_url"], img["cdn_url"])
 	}
-	if _, ok := body["id"]; !ok {
+	if _, ok := img["id"]; !ok {
 		t.Fatal("expected 'id' in response")
 	}
 }
@@ -224,7 +225,8 @@ func TestGetImage_Success(t *testing.T) {
 
 	var body map[string]any
 	decodeBody(t, res, &body)
-	if body["id"] != id.String() {
-		t.Fatalf("expected id %s, got %v", id.String(), body["id"])
+	img, _ := body["image"].(map[string]any)
+	if img["id"] != id.String() {
+		t.Fatalf("expected id %s, got %v", id.String(), img["id"])
 	}
 }
