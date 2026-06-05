@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"shbs-server/cmd/controllers/auth"
+	"shbs-server/cmd/controllers/listing"
 	"shbs-server/cmd/controllers/user"
 	"shbs-server/cmd/middleware"
 	"shbs-server/pkg/config"
@@ -82,4 +83,5 @@ func registerRoutes(api fiber.Router, db *sqlx.DB) {
 	emailSvc := &services.EmailService{}
 	auth.Mount(api, db, emailSvc)
 	user.Mount(api, db)
+	listing.Mount(api, db)
 }
