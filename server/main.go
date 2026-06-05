@@ -10,6 +10,8 @@ import (
 	"shbs-server/cmd/controllers/cart"
 	"shbs-server/cmd/controllers/image"
 	"shbs-server/cmd/controllers/listing"
+	"shbs-server/cmd/controllers/message"
+	"shbs-server/cmd/controllers/order"
 	"shbs-server/cmd/controllers/user"
 	"shbs-server/cmd/middleware"
 	"shbs-server/pkg/config"
@@ -89,6 +91,5 @@ func registerRoutes(api fiber.Router, db *sqlx.DB) {
 	listing.Mount(api, db)
 	cart.Mount(api, db)
 	order.Mount(api, db)
-}
-unt(api, db)
+	message.Mount(api, db)
 }
