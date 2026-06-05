@@ -32,7 +32,15 @@ func HandleListListings(db *sqlx.DB) fiber.Handler {
 		}
 
 		status := c.Query("status", model.ListingStatusActive)
-		add("status = $%d", status)
+		if status != "all" {
+			add("status = $%d", status)
+		}
+
+		if sellerID := c.Query("seller_id"); sellerID != "" {
+			if id, err := uuid.Parse(sellerID); err == nil {
+				add("seller_id = $%d", id)
+			}
+		}
 
 		if dept := c.Query("department"); dept != "" {
 			add("department = $%d", dept)
@@ -48,14 +56,18 @@ func HandleListListings(db *sqlx.DB) fiber.Handler {
 			i += 3
 		}
 		if v := c.Query("price_min"); v != "" {
-			if d, err := decimal.NewFromString(v); err == nil {
-				add("price >= $%d", d)
+			d, err := decimal.NewFromString(v)
+			if err != nil {
+				return fiber.NewError(fiber.StatusBadRequest, "invalid price_min format")
 			}
+			add("price >= $%d", d)
 		}
 		if v := c.Query("price_max"); v != "" {
-			if d, err := decimal.NewFromString(v); err == nil {
-				add("price <= $%d", d)
+			d, err := decimal.NewFromString(v)
+			if err != nil {
+				return fiber.NewError(fiber.StatusBadRequest, "invalid price_max format")
 			}
+			add("price <= $%d", d)
 		}
 
 		where := ""

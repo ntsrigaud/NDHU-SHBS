@@ -26,17 +26,20 @@ func HandleCheckout(db *sqlx.DB) fiber.Handler {
 		}
 		defer tx.Rollback()
 
-		// 1. Get cart items
+		// 1. Get cart items with a row-level lock on the listings to prevent race conditions.
 		var cartItems []struct {
 			ListingID uuid.UUID       `db:"listing_id"`
+			SellerID  uuid.UUID       `db:"seller_id"`
+			Title     string          `db:"title"`
 			Price     decimal.Decimal `db:"price"`
 			Status    string          `db:"status"`
 		}
 		err = tx.Select(&cartItems, `
-			SELECT l.id as listing_id, l.price, l.status
+			SELECT l.id as listing_id, l.seller_id, l.title, l.price, l.status
 			FROM cart_items ci
 			JOIN book_listings l ON ci.listing_id = l.id
-			WHERE ci.buyer_id = $1`, userID)
+			WHERE ci.buyer_id = $1
+			FOR UPDATE OF l`, userID)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "database error")
 		}
@@ -49,7 +52,8 @@ func HandleCheckout(db *sqlx.DB) fiber.Handler {
 		var total decimal.Decimal
 		for _, item := range cartItems {
 			if item.Status != model.ListingStatusActive {
-				return fiber.NewError(fiber.StatusUnprocessableEntity, "one or more items are no longer available")
+				return fiber.NewError(fiber.StatusUnprocessableEntity, 
+					fmt.Sprintf("book '%s' is no longer available", item.Title))
 			}
 			total = total.Add(item.Price)
 		}
@@ -65,7 +69,7 @@ func HandleCheckout(db *sqlx.DB) fiber.Handler {
 			return fiber.NewError(fiber.StatusInternalServerError, "could not create order")
 		}
 
-		// 4. Create Order Items & Update Listing Status
+		// 4. Create Order Items & Update Listing Status & Notify Sellers
 		for _, item := range cartItems {
 			_, err = tx.Exec(`
 				INSERT INTO order_items (id, order_id, listing_id, price_at_purchase)
@@ -82,6 +86,19 @@ func HandleCheckout(db *sqlx.DB) fiber.Handler {
 			)
 			if err != nil {
 				return fiber.NewError(fiber.StatusInternalServerError, "could not update listing status")
+			}
+
+			// Notify the seller
+			payload := fmt.Sprintf(`{"listing_id": "%s", "title": "%s", "buyer_id": "%s"}`, 
+				item.ListingID, item.Title, userID)
+			_, err = tx.Exec(`
+				INSERT INTO notifications (id, user_id, type, payload)
+				VALUES ($1, $2, $3, $4)`,
+				uuid.New(), item.SellerID, model.NotifTypeListingSold, payload,
+			)
+			if err != nil {
+				// We don't abort the transaction if notification fails, but we log it.
+				fmt.Printf("warn: could not create notification for seller %s: %v\n", item.SellerID, err)
 			}
 		}
 

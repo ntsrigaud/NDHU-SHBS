@@ -58,6 +58,18 @@ func HandleSendMessage(db *sqlx.DB) fiber.Handler {
 			return fiber.NewError(fiber.StatusInternalServerError, "could not send message")
 		}
 
+		// Notify the receiver
+		payload := fmt.Sprintf(`{"listing_id": "%s", "sender_id": "%s", "body_preview": "%.20s..."}`,
+			msg.ListingID, msg.SenderID, msg.Body)
+		_, err = db.Exec(`
+			INSERT INTO notifications (id, user_id, type, payload)
+			VALUES ($1, $2, $3, $4)`,
+			uuid.New(), msg.ReceiverID, model.NotifTypeNewMessage, payload,
+		)
+		if err != nil {
+			fmt.Printf("warn: could not create notification for receiver %s: %v\n", msg.ReceiverID, err)
+		}
+
 		return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": msg})
 	}
 }

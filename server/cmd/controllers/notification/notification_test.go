@@ -1,4 +1,4 @@
-package image_test
+package notification_test
 
 import (
 	"bytes"
@@ -24,7 +24,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 
 	"shbs-server/cmd/controllers/auth"
-	"shbs-server/cmd/controllers/image"
+	"shbs-server/cmd/controllers/notification"
 	"shbs-server/cmd/middleware"
 	"shbs-server/pkg/services"
 	"shbs-server/pkg/util"
@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 
 	container, err := tcpostgres.Run(ctx,
 		"postgres:16-alpine",
-		tcpostgres.WithDatabase("shbs_test_image"),
+		tcpostgres.WithDatabase("shbs_test_notification"),
 		tcpostgres.WithUsername("test"),
 		tcpostgres.WithPassword("test"),
 		testcontainers.WithWaitStrategy(
@@ -76,7 +76,7 @@ func TestMain(m *testing.M) {
 	testApp.Use(middleware.ErrorHandler())
 	api := testApp.Group("/api/v1")
 	auth.Mount(api, testDB, &services.EmailService{})
-	image.Mount(api, testDB)
+	notification.Mount(api, testDB)
 
 	os.Exit(m.Run())
 }
@@ -150,20 +150,22 @@ func decodeBody(t *testing.T, res *http.Response, dest any) {
 	}
 }
 
-func insertVerifiedUser(t *testing.T, email, plainPassword string) {
+func insertVerifiedUser(t *testing.T, email, plainPassword string) string {
 	t.Helper()
 	hash, err := util.HashPassword(plainPassword)
 	if err != nil {
 		t.Fatal(err)
 	}
+	id := uuid.New()
 	_, err = testDB.Exec(`
 		INSERT INTO users (id, name, email, password_hash, email_verified)
 		VALUES ($1, $2, $3, $4, true)`,
-		uuid.New(), strings.Split(email, "@")[0], email, hash,
+		id, strings.Split(email, "@")[0], email, hash,
 	)
 	if err != nil {
 		t.Fatal("insertVerifiedUser:", err)
 	}
+	return id.String()
 }
 
 func loginAndGetToken(t *testing.T, email, password string) string {
@@ -183,50 +185,58 @@ func loginAndGetToken(t *testing.T, email, password string) string {
 	return token
 }
 
-func TestRegisterImage_Success(t *testing.T) {
-	email, pass := "img_test@test.com", "Str0ngP@ssword!"
-	insertVerifiedUser(t, email, pass)
+func TestNotifications_Flow(t *testing.T) {
+	email, pass := "notif_test@test.com", "Str0ngP@ssword!"
+	userID := insertVerifiedUser(t, email, pass)
 	token := loginAndGetToken(t, email, pass)
 
-	payload := map[string]string{
-		"s3_key":  "books/test.jpg",
-		"cdn_url": "https://cdn.example.com/books/test.jpg",
-	}
-
-	res, err := testApp.Test(authReq("POST", "/api/v1/images", payload, token), -1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	assertStatus(t, res, http.StatusCreated)
-
-	var body map[string]any
-	decodeBody(t, res, &body)
-	img, _ := body["image"].(map[string]any)
-	if img["cdn_url"] != payload["cdn_url"] {
-		t.Fatalf("expected cdn_url %s, got %v", payload["cdn_url"], img["cdn_url"])
-	}
-	if _, ok := img["id"]; !ok {
-		t.Fatal("expected 'id' in response")
-	}
-}
-
-func TestGetImage_Success(t *testing.T) {
-	id := uuid.New()
-	testDB.MustExec(
-		`INSERT INTO images (id, s3_key, cdn_url) VALUES ($1, $2, $3)`,
-		id, "key/1", "http://cdn.com/1",
+	// 1. Manually insert a notification
+	notifID := uuid.New()
+	testDB.MustExec(`
+		INSERT INTO notifications (id, user_id, type, payload, is_read)
+		VALUES ($1, $2, $3, $4, false)`,
+		notifID, userID, "new_message", `{"text": "hello"}`,
 	)
 
-	res, err := testApp.Test(httptest.NewRequest("GET", "/api/v1/images/"+id.String(), nil), -1)
+	// 2. List notifications
+	res, err := testApp.Test(authReq("GET", "/api/v1/notifications", nil, token), -1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assertStatus(t, res, http.StatusOK)
 
-	var body map[string]any
-	decodeBody(t, res, &body)
-	img, _ := body["image"].(map[string]any)
-	if img["id"] != id.String() {
-		t.Fatalf("expected id %s, got %v", id.String(), img["id"])
+	var listBody map[string]any
+	decodeBody(t, res, &listBody)
+	notifs, _ := listBody["notifications"].([]any)
+	if len(notifs) != 1 {
+		t.Fatalf("expected 1 notification, got %d", len(notifs))
+	}
+
+	n, _ := notifs[0].(map[string]any)
+	if n["id"] != notifID.String() {
+		t.Fatalf("expected notif id %s, got %v", notifID.String(), n["id"])
+	}
+	if n["is_read"] != false {
+		t.Fatal("expected is_read to be false")
+	}
+
+	// 3. Mark as read
+	res, err = testApp.Test(authReq("PATCH", "/api/v1/notifications/"+notifID.String(), nil, token), -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertStatus(t, res, http.StatusOK)
+
+	// 4. Verify mark as read
+	res, err = testApp.Test(authReq("GET", "/api/v1/notifications", nil, token), -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertStatus(t, res, http.StatusOK)
+	decodeBody(t, res, &listBody)
+	notifs, _ = listBody["notifications"].([]any)
+	n, _ = notifs[0].(map[string]any)
+	if n["is_read"] != true {
+		t.Fatal("expected is_read to be true")
 	}
 }

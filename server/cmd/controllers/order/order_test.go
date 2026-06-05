@@ -26,6 +26,7 @@ import (
 	"shbs-server/cmd/controllers/auth"
 	"shbs-server/cmd/controllers/cart"
 	"shbs-server/cmd/controllers/listing"
+	"shbs-server/cmd/controllers/notification"
 	"shbs-server/cmd/controllers/order"
 	"shbs-server/cmd/middleware"
 	"shbs-server/pkg/services"
@@ -81,6 +82,7 @@ func TestMain(m *testing.M) {
 	listing.Mount(api, testDB)
 	cart.Mount(api, testDB)
 	order.Mount(api, testDB)
+	notification.Mount(api, testDB)
 
 	os.Exit(m.Run())
 }
@@ -284,4 +286,37 @@ func TestOrder_CheckoutFlow(t *testing.T) {
 	if len(cartItems) != 0 {
 		t.Fatalf("expected 0 cart items, got %d", len(cartItems))
 	}
+
+	// 5. Verify Seller received a notification
+	// In this test, buyer and seller are the same (not ideal but works for trigger check)
+	res, err = testApp.Test(authReq("GET", "/api/v1/notifications", nil, token), -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertStatus(t, res, http.StatusOK)
+	var notifBody map[string]any
+	decodeBody(t, res, &notifBody)
+	notifs, _ := notifBody["notifications"].([]any)
+	if len(notifs) < 2 {
+		t.Fatalf("expected at least 2 notifications for seller, got %d", len(notifs))
+	}
+}
+
+func TestOrder_CheckoutUnavailable(t *testing.T) {
+	email, pass := "order_fail@test.com", "Str0ngP@ssword!"
+	insertVerifiedUser(t, email, pass)
+	token := loginAndGetToken(t, email, pass)
+
+	l1 := createListing(t, token, "Going to be sold")
+	addToCart(t, token, l1)
+
+	// Manually mark listing as sold
+	testDB.MustExec(`UPDATE book_listings SET status = 'sold' WHERE id = $1`, l1)
+
+	// Attempt checkout
+	res, err := testApp.Test(authReq("POST", "/api/v1/orders", nil, token), -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertStatus(t, res, http.StatusUnprocessableEntity)
 }
