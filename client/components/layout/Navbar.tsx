@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, MessageSquare } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { useUnreadCount } from '@/hooks/useMessages';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const dispatch = useAppDispatch();
@@ -46,6 +47,8 @@ export default function Navbar() {
         <nav className="flex items-center gap-2">
           {user ? (
             <>
+              <NotificationBell />
+
               <Link href="/messages" className="relative">
                 <Button variant="ghost" size="icon">
                   <MessageSquare className="h-5 w-5" />
