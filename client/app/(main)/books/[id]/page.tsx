@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, ArrowLeft, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 
 export default function BookDetailPage() {
@@ -128,6 +128,14 @@ export default function BookDetailPage() {
               <ShoppingCart className="mr-2 h-4 w-4" />
               {isSold ? 'Sold' : alreadyInCart ? 'In cart' : 'Add to cart'}
             </Button>
+            {user && listing.seller_id !== user.id && !isSold && (
+              <Button variant="outline" asChild>
+                <Link href={`/messages/${listing.id}`}>
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Message seller
+                </Link>
+              </Button>
+            )}
           </div>
 
           {listing.seller && (
