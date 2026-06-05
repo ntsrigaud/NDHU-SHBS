@@ -478,3 +478,52 @@ func TestDelistListing_Success(t *testing.T) {
 		t.Fatalf("expected status 'delisted', got %v", l["status"])
 	}
 }
+
+func TestCreateListing_WithImages(t *testing.T) {
+	email, pass := "listing_img@test.com", "Str0ngP@ssword!"
+	insertVerifiedUser(t, email, pass)
+	token := loginAndGetToken(t, email, pass)
+
+	// 1. Insert some images into the DB.
+	imgID1, imgID2 := uuid.New(), uuid.New()
+	testDB.MustExec(`INSERT INTO images (id, s3_key, cdn_url) VALUES ($1, 'k1', 'http://cdn.com/1'), ($2, 'k2', 'http://cdn.com/2')`, imgID1, imgID2)
+
+	// 2. Create listing with these image IDs.
+	payload := map[string]any{
+		"title":     "Image Book",
+		"author":    "Author",
+		"price":     "15.00",
+		"condition": "good",
+		"image_ids": []string{imgID1.String(), imgID2.String()},
+	}
+
+	res, err := testApp.Test(authReq("POST", "/api/v1/listings", payload, token), -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertStatus(t, res, http.StatusCreated)
+
+	var body map[string]any
+	decodeBody(t, res, &body)
+	l, _ := body["listing"].(map[string]any)
+	listingID := l["id"].(string)
+
+	// 3. Fetch listing and verify URLs.
+	getRes, err := testApp.Test(httptest.NewRequest("GET", "/api/v1/listings/"+listingID, nil), -1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertStatus(t, getRes, http.StatusOK)
+
+	var getBody map[string]any
+	decodeBody(t, getRes, &getBody)
+	gl, _ := getBody["listing"].(map[string]any)
+	urls, _ := gl["image_urls"].([]any)
+
+	if len(urls) != 2 {
+		t.Fatalf("expected 2 image URLs, got %d", len(urls))
+	}
+	if urls[0] != "http://cdn.com/1" || urls[1] != "http://cdn.com/2" {
+		t.Fatalf("unexpected image URLs order or values: %v", urls)
+	}
+}
