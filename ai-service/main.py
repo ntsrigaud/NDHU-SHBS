@@ -17,6 +17,7 @@ import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -38,10 +39,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Load ML models during startup; release resources on shutdown."""
     global _model_loaded
     logger.info("AI service starting — loading models…")
-    # TODO (Phase 4): initialize Roboflow client / load weights here
+    app.state.http_client = httpx.AsyncClient(timeout=30.0)
     _model_loaded = True
     logger.info("Models ready")
     yield
+    await app.state.http_client.aclose()
+    _model_loaded = False
     logger.info("AI service shutting down")
 
 
@@ -51,6 +54,10 @@ app = FastAPI(
     description="Internal AI service for book metadata extraction and condition classification.",
     lifespan=lifespan,
 )
+
+# Default client used by tests that skip the lifespan context (TestClient without `with`).
+# The lifespan always replaces this with a fresh client in production/Docker.
+app.state.http_client = httpx.AsyncClient(timeout=30.0)
 
 # CORS is restricted to the Docker bridge network (Go API server only).
 # The wildcard below is safe because Traefik never routes /ai from external
