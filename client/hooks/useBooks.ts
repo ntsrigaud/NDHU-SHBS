@@ -2,8 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { BookListing, ListingsFilter } from '@/lib/types';
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+import { BASE_URL } from '@/lib/api';
 
 async function fetchListings(
   filters: ListingsFilter,
