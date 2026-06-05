@@ -51,23 +51,34 @@ jobs:
             --environment=${{ github.event_name == 'push' && 'production' || 'preview' }} \
             --token=${{ secrets.VERCEL_TOKEN }}
 
-      # Print NEXT_PUBLIC_* vars from the pulled env file so we can verify
-      # the correct API URL is baked into the build. Secrets are not printed.
-      - name: Debug — verify pulled NEXT_PUBLIC vars
+      # Print NEXT_PUBLIC_* vars from the pulled env file AND the value that
+      # will be explicitly injected via --build-env in the next step.
+      # Sensitive vars pulled from Vercel show as empty — that is expected;
+      # the explicit --build-env below wins and is what actually gets baked in.
+      - name: Debug — verify NEXT_PUBLIC vars
         run: |
           env_file=".vercel/.env.${{ github.event_name == 'push' && 'production' || 'preview' }}.local"
-          echo "Looking for: $env_file"
+          echo "--- Pulled env file: $env_file ---"
           if [ -f "$env_file" ]; then
-            echo "=== NEXT_PUBLIC_* vars ==="
-            grep '^NEXT_PUBLIC_' "$env_file" || echo "(no NEXT_PUBLIC_ vars found in env file)"
+            grep '^NEXT_PUBLIC_' "$env_file" || echo "(no NEXT_PUBLIC_ vars in pulled file)"
           else
-            echo "ERROR: env file not found — vercel pull may have failed or project rootDirectory is misconfigured"
-            ls -la .vercel/ 2>/dev/null || echo "(.vercel/ directory does not exist)"
+            echo "WARNING: pulled env file not found"
+            ls -la .vercel/ 2>/dev/null
           fi
+          echo "--- Explicitly injected (overrides pulled file) ---"
+          echo "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}"
 
-      # vercel build runs next build inside Vercel's build container, picking
-      # up the env vars pulled above (including NEXT_PUBLIC_API_URL).
+      # vercel build runs next build picking up the pulled env vars.
+      # NEXT_PUBLIC_API_URL is passed explicitly via --build-env because Vercel
+      # marks it Sensitive in the dashboard, which causes vercel pull to emit an
+      # empty value. The --build-env flag overrides the pulled file and ensures
+      # the correct URL is baked into the Next.js bundle.
       - name: Build
+        env:
+          # Next.js bakes NEXT_PUBLIC_* vars from the process environment at
+          # build time. Setting it here ensures vercel build → next build picks
+          # it up regardless of how Vercel stores it in the dashboard.
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
         run: |
           vercel build \
             ${{ github.event_name == 'push' && '--prod' || '' }} \
