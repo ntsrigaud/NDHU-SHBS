@@ -83,5 +83,8 @@ func registerRoutes(api fiber.Router, db *sqlx.DB) {
 	emailSvc := &services.EmailService{}
 	auth.Mount(api, db, emailSvc)
 	user.Mount(api, db)
+	image.Mount(api, db)
 	listing.Mount(api, db)
+}
+unt(api, db)
 }
