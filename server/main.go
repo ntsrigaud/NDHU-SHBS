@@ -51,6 +51,7 @@ func main() {
 	// ── Global middleware ─────────────────────────────────────────────────────
 	app.Use(middleware.ErrorHandler())
 	app.Use(middleware.CorsHandler())
+	app.Use(middleware.PrivateNetworkAccessHandler())
 	app.Use(middleware.Logger())
 	app.Use(middleware.Compressor())
 	app.Use(middleware.RateLimiter())
