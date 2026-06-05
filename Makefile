@@ -77,7 +77,7 @@ server-migrate:
 	cd $(SERVER_DIR) && $(GO) run ./cmd/migrate
 
 server-test:
-	cd $(SERVER_DIR) && $(GO) test -race -coverprofile=coverage.out ./... && \
+	cd $(SERVER_DIR) && $(GO) test -race -coverprofile=coverage.out ./pkg/... ./cmd/middleware/... && \
 		$(GO) tool cover -func=coverage.out
 
 server-dev: server-migrate

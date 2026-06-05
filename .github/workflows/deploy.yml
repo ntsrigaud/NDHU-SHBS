@@ -30,12 +30,10 @@ jobs:
           - context: server
             image: server
             target: production
-          - context: client
-            image: client
-            target: production
           - context: ai-service
             image: ai
             target: production
+          # client is deployed to Vercel via deploy-client.yml — no Docker image needed.
 
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +56,7 @@ jobs:
             ${{ env.IMAGE_PREFIX }}-${{ matrix.image }}:${{ github.sha }}
 
   # ──────────────────────────────────────────────────────────────
-  # Deploy to staging host via SSH
+  # Deploy to staging host via SSH over Tailscale
   # ──────────────────────────────────────────────────────────────
   deploy:
     name: Deploy to staging
@@ -69,6 +67,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Join the same Tailscale network as the staging host so the runner
+      # can reach it via its stable Tailscale IP (no public IP required).
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -76,8 +81,16 @@ jobs:
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           script: |
-            cd /opt/ndhu-shbs
+            set -e
+            REPO=/opt/ndhu-shbs/repo
+
+            # Pull latest compose files and traefik config from GitHub
+            cd "$REPO"
+            git pull --ff-only
+
+            # Authenticate to GHCR and deploy with pre-built images
+            cd "$REPO"
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            docker compose pull
-            docker compose up -d --remove-orphans
+            docker compose -p ndhu-shbs -f docker-compose.prod.yml pull
+            docker compose -p ndhu-shbs -f docker-compose.prod.yml up -d --remove-orphans
             docker image prune -f

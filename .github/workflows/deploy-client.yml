@@ -1,0 +1,119 @@
+name: Deploy Client to Vercel
+
+# Trigger only when client-related files change to avoid unnecessary deploys.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'client/**'
+      - '.github/workflows/deploy-client.yml'
+  pull_request:
+    paths:
+      - 'client/**'
+      - '.github/workflows/deploy-client.yml'
+
+concurrency:
+  # One deploy per branch at a time; cancel in-flight previews on new push.
+  group: vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: ${{ github.event_name == 'push' && 'Production' || 'Preview' }} → Vercel
+    runs-on: ubuntu-latest
+    # Required: makes GitHub inject the secrets stored in the staging environment.
+    environment: staging
+    permissions:
+      # Needed to post the preview URL as a PR comment.
+      pull-requests: write
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      # Pull environment variables and project settings from the Vercel API.
+      # 'production' env is used for pushes to main; 'preview' for PRs.
+      - name: Pull Vercel environment
+        run: |
+          vercel pull --yes \
+            --environment=${{ github.event_name == 'push' && 'production' || 'preview' }} \
+            --token=${{ secrets.VERCEL_TOKEN }}
+
+      # vercel build runs next build picking up the pulled env vars.
+      # NEXT_PUBLIC_API_URL is passed explicitly via --build-env because Vercel
+      # marks it Sensitive in the dashboard, which causes vercel pull to emit an
+      # empty value. The --build-env flag overrides the pulled file and ensures
+      # the correct URL is baked into the Next.js bundle.
+      - name: Build
+        env:
+          # Next.js bakes NEXT_PUBLIC_* vars from the process environment at
+          # build time. Setting it here ensures vercel build → next build picks
+          # it up regardless of how Vercel stores it in the dashboard.
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+        run: |
+          vercel build \
+            ${{ github.event_name == 'push' && '--prod' || '' }} \
+            --token=${{ secrets.VERCEL_TOKEN }}
+
+      # Deploy the pre-built output and capture the deployment URL.
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(vercel deploy --prebuilt \
+            ${{ github.event_name == 'push' && '--prod' || '' }} \
+            --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      # Post the preview URL as a sticky comment on the PR so reviewers can
+      # open it without digging through the Actions log.
+      - name: Comment preview URL on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- vercel-preview-comment -->';
+            const body = [
+              marker,
+              '## 🚀 Vercel Preview Deployment',
+              '',
+              `**URL:** ${{ steps.deploy.outputs.url }}`,
+              `**Commit:** ${{ github.sha }}`,
+              '',
+              '_This comment is updated automatically on every push to this PR._',
+            ].join('\n');
+
+            // Find and update an existing preview comment instead of adding a new one.
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

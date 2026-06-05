@@ -85,7 +85,10 @@ jobs:
         run: go vet ./...
 
       - name: Test with coverage
-        run: go test -race -coverprofile=coverage.out ./...
+        # Exclude cmd/migrate (standalone DB migration tool, requires live DB +
+        # full schema) and the root main package from the coverage measurement.
+        # Both are integration-level binaries unsuitable for unit-test coverage.
+        run: go test -race -coverprofile=coverage.out ./pkg/... ./cmd/middleware/...
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/shbs_test?sslmode=disable
 

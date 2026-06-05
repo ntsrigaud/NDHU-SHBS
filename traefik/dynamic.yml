@@ -1,3 +1,4 @@
+# Traefik dynamic routing — client is served by Vercel, not this host.
 http:
   routers:
     api:
@@ -9,10 +10,6 @@ http:
       middlewares:
         - ai-strip
       service: ai
-
-    client:
-      rule: "PathPrefix(`/`)"
-      service: client
 
   middlewares:
     ai-strip:
@@ -30,8 +27,3 @@ http:
       loadBalancer:
         servers:
           - url: "http://ai:8000"
-
-    client:
-      loadBalancer:
-        servers:
-          - url: "http://client:3000"

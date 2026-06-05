@@ -55,3 +55,22 @@ func CorsHandler() fiber.Handler {
 		AllowCredentials: true,
 	})
 }
+
+// PrivateNetworkAccessHandler handles the W3C Private Network Access (PNA)
+// preflight. Browsers send "Access-Control-Request-Private-Network: true" when
+// a public origin (e.g. ndhu-shbs.vercel.app) makes a request whose resolved
+// IP falls in a private or CGNAT range (RFC 1918 or 100.64.0.0/10 — the range
+// Tailscale uses). The server must echo "Access-Control-Allow-Private-Network:
+// true" in the preflight response for the browser to permit the actual request.
+//
+// This handler must be registered AFTER CorsHandler so that the CORS headers
+// are already set before we append the PNA header.
+func PrivateNetworkAccessHandler() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if c.Method() == fiber.MethodOptions &&
+			c.Get("Access-Control-Request-Private-Network") == "true" {
+			c.Set("Access-Control-Allow-Private-Network", "true")
+		}
+		return c.Next()
+	}
+}

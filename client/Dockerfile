@@ -22,6 +22,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
+# Signal next.config.mjs to produce the standalone server bundle
+# required by the production Docker image.
+ENV NEXT_OUTPUT_STANDALONE=1
 
 RUN npm run build
 
