@@ -40,6 +40,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     global _model_loaded
     logger.info("AI service starting — loading models…")
     app.state.http_client = httpx.AsyncClient(timeout=30.0)
+
+    # Warm the OCR engine off the event loop so the first request isn't slow.
+    from fastapi.concurrency import run_in_threadpool
+
+    from routers.metadata import prewarm_ocr
+
+    try:
+        await run_in_threadpool(prewarm_ocr)
+    except Exception as exc:  # noqa: BLE001 — never let OCR warmup crash startup
+        logger.warning("OCR engine warmup failed (will lazy-load on demand): %s", exc)
+
     _model_loaded = True
     logger.info("Models ready")
     yield

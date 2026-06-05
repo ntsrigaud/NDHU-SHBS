@@ -42,9 +42,11 @@ def test_condition_stub_schema(client: TestClient) -> None:
     assert 0.0 <= data["confidence"] <= 1.0
 
 
-def test_metadata_stub_returns_200(client: TestClient) -> None:
+def test_metadata_returns_200(client: TestClient) -> None:
+    # "dGVzdA==" is valid base64 but not an image: no barcode, and OCR is
+    # stubbed to empty by conftest, so this resolves to a null/0.0 response.
     response = client.post(
         "/analyze/metadata",
-        json={"image_base64": "dGVzdA=="},
+        json={"images_base64": ["dGVzdA=="]},
     )
     assert response.status_code == 200

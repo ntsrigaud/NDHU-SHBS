@@ -6,9 +6,11 @@ from pydantic import BaseModel, Field
 # ── Request schemas ────────────────────────────────────────────────────────────
 
 class MetadataRequest(BaseModel):
-    """Image bytes are supplied as a base64-encoded string."""
+    """One or more book photos (cover, back, pages) as base64-encoded strings."""
 
-    image_base64: str = Field(..., description="Base64-encoded book cover image")
+    images_base64: list[str] = Field(
+        ..., min_length=1, max_length=10, description="Base64-encoded book photo(s)"
+    )
 
 
 class ConditionRequest(BaseModel):
