@@ -80,10 +80,25 @@ func HandleListListings(db *sqlx.DB) fiber.Handler {
 		offset := (page - 1) * limit
 
 		listArgs := append(args, limit, offset)
-		query := "SELECT * FROM book_listings" + where +
-			fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", i, i+1)
+		query := fmt.Sprintf(`
+			SELECT 
+				l.id, l.seller_id, l.title, l.author, l.isbn, l.course_code, l.department,
+				l.price, l.condition, l.status, l.description, l.ai_confidence,
+				l.created_at, l.updated_at,
+				u.name AS seller_name, 
+				img_avatar.cdn_url AS seller_avatar,
+				COALESCE(array_agg(img.cdn_url ORDER BY li.display_order) FILTER (WHERE img.cdn_url IS NOT NULL), '{}') AS image_urls
+			FROM book_listings l
+			JOIN users u ON l.seller_id = u.id
+			LEFT JOIN images img_avatar ON u.avatar_image_id = img_avatar.id
+			LEFT JOIN listing_images li ON l.id = li.listing_id
+			LEFT JOIN images img ON li.image_id = img.id
+			%s
+			GROUP BY l.id, u.id, img_avatar.id
+			ORDER BY l.created_at DESC 
+			LIMIT $%d OFFSET $%d`, where, i, i+1)
 
-		var listings []model.BookListing
+		var listings []ListingWithImages
 		if err := db.Select(&listings, query, listArgs...); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "database error")
 		}
@@ -105,8 +120,24 @@ func HandleGetListing(db *sqlx.DB) fiber.Handler {
 			return fiber.NewError(fiber.StatusBadRequest, "invalid listing id")
 		}
 
-		var listing model.BookListing
-		if err := db.Get(&listing, `SELECT * FROM book_listings WHERE id = $1`, id); err != nil {
+		var listing ListingWithImages
+		query := `
+			SELECT 
+				l.id, l.seller_id, l.title, l.author, l.isbn, l.course_code, l.department,
+				l.price, l.condition, l.status, l.description, l.ai_confidence,
+				l.created_at, l.updated_at,
+				u.name AS seller_name, 
+				img_avatar.cdn_url AS seller_avatar,
+				COALESCE(array_agg(img.cdn_url ORDER BY li.display_order) FILTER (WHERE img.cdn_url IS NOT NULL), '{}') AS image_urls
+			FROM book_listings l
+			JOIN users u ON l.seller_id = u.id
+			LEFT JOIN images img_avatar ON u.avatar_image_id = img_avatar.id
+			LEFT JOIN listing_images li ON l.id = li.listing_id
+			LEFT JOIN images img ON li.image_id = img.id
+			WHERE l.id = $1
+			GROUP BY l.id, u.id, img_avatar.id`
+
+		if err := db.Get(&listing, query, id); err != nil {
 			return fiber.NewError(fiber.StatusNotFound, "listing not found")
 		}
 
@@ -132,6 +163,12 @@ func HandleCreateListing(db *sqlx.DB) fiber.Handler {
 			return fiber.NewError(fiber.StatusUnprocessableEntity, msg)
 		}
 
+		tx, err := db.Beginx()
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "database error")
+		}
+		defer tx.Rollback()
+
 		// nil-ify empty optional strings so they are stored as SQL NULL.
 		isbn := nilIfEmpty(req.ISBN)
 		courseCode := nilIfEmpty(req.CourseCode)
@@ -139,7 +176,7 @@ func HandleCreateListing(db *sqlx.DB) fiber.Handler {
 		description := nilIfEmpty(req.Description)
 
 		var listing model.BookListing
-		err = db.QueryRowx(`
+		err = tx.QueryRowx(`
 			INSERT INTO book_listings
 				(id, seller_id, title, author, isbn, course_code, department,
 				 price, condition, status, description)
@@ -151,6 +188,22 @@ func HandleCreateListing(db *sqlx.DB) fiber.Handler {
 		).StructScan(&listing)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "could not create listing")
+		}
+
+		// Handle images
+		for i, imageID := range req.ImageIDs {
+			_, err = tx.Exec(`
+				INSERT INTO listing_images (listing_id, image_id, display_order)
+				VALUES ($1, $2, $3)`,
+				listing.ID, imageID, i,
+			)
+			if err != nil {
+				return fiber.NewError(fiber.StatusInternalServerError, "could not associate images")
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "database error")
 		}
 
 		return c.Status(fiber.StatusCreated).JSON(fiber.Map{"listing": listing})
@@ -184,6 +237,7 @@ func HandleUpdateListing(db *sqlx.DB) fiber.Handler {
 			return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
 		}
 
+		// Validation logic...
 		if req.Condition != nil {
 			*req.Condition = strings.ToLower(strings.TrimSpace(*req.Condition))
 			if !validConditions[*req.Condition] {
@@ -210,6 +264,12 @@ func HandleUpdateListing(db *sqlx.DB) fiber.Handler {
 				return fiber.NewError(fiber.StatusUnprocessableEntity, "author is required")
 			}
 		}
+
+		tx, err := db.Beginx()
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "database error")
+		}
+		defer tx.Rollback()
 
 		setClauses := []string{"updated_at = NOW()"}
 		args := []any{}
@@ -248,17 +308,54 @@ func HandleUpdateListing(db *sqlx.DB) fiber.Handler {
 			setField("description", nilIfEmpty(*req.Description))
 		}
 
-		if len(setClauses) == 1 {
-			return fiber.NewError(fiber.StatusBadRequest, "no fields to update")
+		if len(setClauses) > 1 {
+			args = append(args, id)
+			q := fmt.Sprintf("UPDATE book_listings SET %s WHERE id = $%d",
+				strings.Join(setClauses, ", "), n)
+			if _, err := tx.Exec(q, args...); err != nil {
+				return fiber.NewError(fiber.StatusInternalServerError, "could not update listing")
+			}
 		}
 
-		args = append(args, id)
-		q := fmt.Sprintf("UPDATE book_listings SET %s WHERE id = $%d RETURNING *",
-			strings.Join(setClauses, ", "), n)
+		// Update images if provided
+		if req.ImageIDs != nil {
+			if _, err := tx.Exec(`DELETE FROM listing_images WHERE listing_id = $1`, id); err != nil {
+				return fiber.NewError(fiber.StatusInternalServerError, "database error")
+			}
+			for i, imageID := range *req.ImageIDs {
+				_, err = tx.Exec(`
+					INSERT INTO listing_images (listing_id, image_id, display_order)
+					VALUES ($1, $2, $3)`,
+					id, imageID, i,
+				)
+				if err != nil {
+					return fiber.NewError(fiber.StatusInternalServerError, "could not update images")
+				}
+			}
+		}
 
-		var updated model.BookListing
-		if err := db.QueryRowx(q, args...).StructScan(&updated); err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, "could not update listing")
+		if err := tx.Commit(); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "database error")
+		}
+
+		// Re-fetch to return full object (with seller name, etc)
+		var updated ListingWithImages
+		query := `
+			SELECT 
+				l.*, 
+				u.name AS seller_name, 
+				img_avatar.cdn_url AS seller_avatar,
+				COALESCE(array_agg(img.cdn_url ORDER BY li.display_order) FILTER (WHERE img.cdn_url IS NOT NULL), '{}') AS image_urls
+			FROM book_listings l
+			JOIN users u ON l.seller_id = u.id
+			LEFT JOIN images img_avatar ON u.avatar_image_id = img_avatar.id
+			LEFT JOIN listing_images li ON l.id = li.listing_id
+			LEFT JOIN images img ON li.image_id = img.id
+			WHERE l.id = $1
+			GROUP BY l.id, u.id, img_avatar.id`
+
+		if err := db.Get(&updated, query, id); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "could not fetch updated listing")
 		}
 
 		return c.JSON(fiber.Map{"listing": updated})
