@@ -46,7 +46,7 @@ export default function FilterSidebar() {
   }
 
   const hasFilters = ['condition', 'price_min', 'price_max', 'department', 'sort'].some((k) =>
-    searchParams.get(k),
+    searchParams.get(k)
   );
 
   return (
@@ -55,7 +55,7 @@ export default function FilterSidebar() {
         <Label>Sort</Label>
         <Select
           value={searchParams.get('sort') ?? 'newest'}
-          onValueChange={(v) => setParam('sort', v)}
+          onValueChange={(v: string) => setParam('sort', v)}
         >
           <SelectTrigger>
             <SelectValue />
@@ -76,7 +76,7 @@ export default function FilterSidebar() {
         <Label>Condition</Label>
         <Select
           value={searchParams.get('condition') ?? ''}
-          onValueChange={(v) => setParam('condition', v === 'all' ? '' : v)}
+          onValueChange={(v: string) => setParam('condition', v === 'all' ? '' : v)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Any condition" />
