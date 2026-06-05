@@ -74,10 +74,14 @@ jobs:
       # empty value. The --build-env flag overrides the pulled file and ensures
       # the correct URL is baked into the Next.js bundle.
       - name: Build
+        env:
+          # Next.js bakes NEXT_PUBLIC_* vars from the process environment at
+          # build time. Setting it here ensures vercel build → next build picks
+          # it up regardless of how Vercel stores it in the dashboard.
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
         run: |
           vercel build \
             ${{ github.event_name == 'push' && '--prod' || '' }} \
-            --build-env NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }} \
             --token=${{ secrets.VERCEL_TOKEN }}
 
       # Deploy the pre-built output and capture the deployment URL.
