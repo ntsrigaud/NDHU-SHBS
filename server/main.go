@@ -88,4 +88,7 @@ func registerRoutes(api fiber.Router, db *sqlx.DB) {
 	image.Mount(api, db)
 	listing.Mount(api, db)
 	cart.Mount(api, db)
+	order.Mount(api, db)
+}
+unt(api, db)
 }
