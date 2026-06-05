@@ -207,7 +207,7 @@ func TestRegister_WeakPassword(t *testing.T) {
 		"password": "abc",
 	})
 	res, _ := testApp.Test(req, -1)
-	assertStatus(t, res, http.StatusBadRequest)
+	assertStatus(t, res, http.StatusUnprocessableEntity)
 }
 
 func TestRegister_MissingName(t *testing.T) {
@@ -217,7 +217,7 @@ func TestRegister_MissingName(t *testing.T) {
 		"password": "Str0ngP@ssword!",
 	})
 	res, _ := testApp.Test(req, -1)
-	assertStatus(t, res, http.StatusBadRequest)
+	assertStatus(t, res, http.StatusUnprocessableEntity)
 }
 
 // ─── Login ────────────────────────────────────────────────────────────────────
