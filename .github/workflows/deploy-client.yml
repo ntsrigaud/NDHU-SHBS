@@ -51,23 +51,6 @@ jobs:
             --environment=${{ github.event_name == 'push' && 'production' || 'preview' }} \
             --token=${{ secrets.VERCEL_TOKEN }}
 
-      # Print NEXT_PUBLIC_* vars from the pulled env file AND the value that
-      # will be explicitly injected via --build-env in the next step.
-      # Sensitive vars pulled from Vercel show as empty — that is expected;
-      # the explicit --build-env below wins and is what actually gets baked in.
-      - name: Debug — verify NEXT_PUBLIC vars
-        run: |
-          env_file=".vercel/.env.${{ github.event_name == 'push' && 'production' || 'preview' }}.local"
-          echo "--- Pulled env file: $env_file ---"
-          if [ -f "$env_file" ]; then
-            grep '^NEXT_PUBLIC_' "$env_file" || echo "(no NEXT_PUBLIC_ vars in pulled file)"
-          else
-            echo "WARNING: pulled env file not found"
-            ls -la .vercel/ 2>/dev/null
-          fi
-          echo "--- Explicitly injected (overrides pulled file) ---"
-          echo "NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}"
-
       # vercel build runs next build picking up the pulled env vars.
       # NEXT_PUBLIC_API_URL is passed explicitly via --build-env because Vercel
       # marks it Sensitive in the dashboard, which causes vercel pull to emit an
