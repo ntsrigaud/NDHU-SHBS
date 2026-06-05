@@ -51,6 +51,20 @@ jobs:
             --environment=${{ github.event_name == 'push' && 'production' || 'preview' }} \
             --token=${{ secrets.VERCEL_TOKEN }}
 
+      # Print NEXT_PUBLIC_* vars from the pulled env file so we can verify
+      # the correct API URL is baked into the build. Secrets are not printed.
+      - name: Debug — verify pulled NEXT_PUBLIC vars
+        run: |
+          env_file=".vercel/.env.${{ github.event_name == 'push' && 'production' || 'preview' }}.local"
+          echo "Looking for: $env_file"
+          if [ -f "$env_file" ]; then
+            echo "=== NEXT_PUBLIC_* vars ==="
+            grep '^NEXT_PUBLIC_' "$env_file" || echo "(no NEXT_PUBLIC_ vars found in env file)"
+          else
+            echo "ERROR: env file not found — vercel pull may have failed or project rootDirectory is misconfigured"
+            ls -la .vercel/ 2>/dev/null || echo "(.vercel/ directory does not exist)"
+          fi
+
       # vercel build runs next build inside Vercel's build container, picking
       # up the env vars pulled above (including NEXT_PUBLIC_API_URL).
       - name: Build
