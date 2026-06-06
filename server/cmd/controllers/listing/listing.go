@@ -1,6 +1,8 @@
 package listing
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -20,6 +22,28 @@ var validConditions = map[string]bool{
 // sellerEditableStatuses are the status values a seller may set directly.
 var sellerEditableStatuses = map[string]bool{
 	"active": true, "delisted": true,
+}
+
+const listingWithImagesByIDQuery = `
+	SELECT 
+		l.id, l.seller_id, l.title, l.author, l.isbn, l.course_code, l.department,
+		l.price, l.condition, l.status, l.description, l.ai_confidence,
+		l.created_at, l.updated_at,
+		u.name AS seller_name,
+		img_avatar.cdn_url AS seller_avatar,
+		COALESCE(array_agg(img.cdn_url ORDER BY li.display_order) FILTER (WHERE img.cdn_url IS NOT NULL), '{}') AS image_urls
+	FROM book_listings l
+	JOIN users u ON l.seller_id = u.id
+	LEFT JOIN images img_avatar ON u.avatar_image_id = img_avatar.id
+	LEFT JOIN listing_images li ON l.id = li.listing_id
+	LEFT JOIN images img ON li.image_id = img.id
+	WHERE l.id = $1
+	GROUP BY l.id, u.id, img_avatar.id`
+
+func fetchListingWithImages(db *sqlx.DB, id uuid.UUID) (model.ListingWithImages, error) {
+	var listing model.ListingWithImages
+	err := db.Get(&listing, listingWithImagesByIDQuery, id)
+	return listing, err
 }
 
 func normalizeCreateRequest(r *model.SwaggerCreateListingRequest) {
@@ -187,25 +211,12 @@ func GetListing(db *sqlx.DB, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid listing id")
 	}
 
-	var listing model.ListingWithImages
-	query := `
-		SELECT 
-			l.id, l.seller_id, l.title, l.author, l.isbn, l.course_code, l.department,
-			l.price, l.condition, l.status, l.description, l.ai_confidence,
-			l.created_at, l.updated_at,
-			u.name AS seller_name, 
-			img_avatar.cdn_url AS seller_avatar,
-			COALESCE(array_agg(img.cdn_url ORDER BY li.display_order) FILTER (WHERE img.cdn_url IS NOT NULL), '{}') AS image_urls
-		FROM book_listings l
-		JOIN users u ON l.seller_id = u.id
-		LEFT JOIN images img_avatar ON u.avatar_image_id = img_avatar.id
-		LEFT JOIN listing_images li ON l.id = li.listing_id
-		LEFT JOIN images img ON li.image_id = img.id
-		WHERE l.id = $1
-		GROUP BY l.id, u.id, img_avatar.id`
-
-	if err := db.Get(&listing, query, id); err != nil {
+	listing, err := fetchListingWithImages(db, id)
+	if errors.Is(err, sql.ErrNoRows) {
 		return fiber.NewError(fiber.StatusNotFound, "listing not found")
+	}
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "database error")
 	}
 
 	return c.JSON(listing)
@@ -329,7 +340,12 @@ func CreateListing(db *sqlx.DB, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "database error")
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"listing": listing})
+	created, err := fetchListingWithImages(db, listing.ID)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "could not fetch created listing")
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(created)
 }
 
 // UpdateListing handles PATCH /listings/:id (auth required, owner only).
@@ -363,8 +379,10 @@ func UpdateListing(db *sqlx.DB, c *fiber.Ctx) error {
 	}
 
 	var listing model.BookListing
-	if err := db.Get(&listing, `SELECT * FROM book_listings WHERE id = $1`, id); err != nil {
+	if err := db.Get(&listing, `SELECT * FROM book_listings WHERE id = $1`, id); errors.Is(err, sql.ErrNoRows) {
 		return fiber.NewError(fiber.StatusNotFound, "listing not found")
+	} else if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "database error")
 	}
 	if listing.SellerID != userID {
 		return fiber.NewError(fiber.StatusForbidden, "you do not own this listing")
@@ -474,22 +492,8 @@ func UpdateListing(db *sqlx.DB, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "database error")
 	}
 
-	var updated model.ListingWithImages
-	query := `
-		SELECT 
-			l.*, 
-			u.name AS seller_name, 
-			img_avatar.cdn_url AS seller_avatar,
-			COALESCE(array_agg(img.cdn_url ORDER BY li.display_order) FILTER (WHERE img.cdn_url IS NOT NULL), '{}') AS image_urls
-		FROM book_listings l
-		JOIN users u ON l.seller_id = u.id
-		LEFT JOIN images img_avatar ON u.avatar_image_id = img_avatar.id
-		LEFT JOIN listing_images li ON l.id = li.listing_id
-		LEFT JOIN images img ON li.image_id = img.id
-		WHERE l.id = $1
-		GROUP BY l.id, u.id, img_avatar.id`
-
-	if err := db.Get(&updated, query, id); err != nil {
+	updated, err := fetchListingWithImages(db, id)
+	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not fetch updated listing")
 	}
 
@@ -525,8 +529,10 @@ func DeleteListing(db *sqlx.DB, c *fiber.Ctx) error {
 	}
 
 	var listing model.BookListing
-	if err := db.Get(&listing, `SELECT * FROM book_listings WHERE id = $1`, id); err != nil {
+	if err := db.Get(&listing, `SELECT * FROM book_listings WHERE id = $1`, id); errors.Is(err, sql.ErrNoRows) {
 		return fiber.NewError(fiber.StatusNotFound, "listing not found")
+	} else if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "database error")
 	}
 	if listing.SellerID != userID && !isAdmin {
 		return fiber.NewError(fiber.StatusForbidden, "you do not own this listing")
