@@ -85,6 +85,11 @@ func TestMain(m *testing.M) {
 	testApp.Post("/api/v1/auth/logout", authMW, func(c *fiber.Ctx) error { return auth.LogoutUser(testDB, c) })
 	testApp.Get("/api/v1/auth/verify", func(c *fiber.Ctx) error { return auth.VerifyEmail(testDB, c) })
 	testApp.Post("/api/v1/auth/resend-verification", func(c *fiber.Ctx) error { return auth.ResendVerification(testDB, emailSvc, c) })
+	testApp.Get("/api/v1/auth/sso/login", func(c *fiber.Ctx) error { return auth.SSOLogin(c) })
+	testApp.Get("/api/v1/auth/sso/callback", func(c *fiber.Ctx) error { return auth.SSOCallback(testDB, c) })
+
+	os.Setenv("NDHU_CAS_BASE_URL", "https://cas.ndhu.edu.tw")
+	os.Setenv("NDHU_SSO_MOCK", "true")
 
 	os.Exit(m.Run())
 }
@@ -436,4 +441,67 @@ func TestLogout_BlacklistsToken(t *testing.T) {
 	logoutReq2.Header.Set("Authorization", "Bearer "+token)
 	logoutRes2, _ := testApp.Test(logoutReq2, -1)
 	assertStatus(t, logoutRes2, http.StatusUnauthorized)
+}
+
+// ─── SSO ──────────────────────────────────────────────────────────────────────
+
+func TestSSO_LoginRedirect(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/auth/sso/login", nil)
+	res, _ := testApp.Test(req, -1)
+
+	assertStatus(t, res, http.StatusFound)
+	loc := res.Header.Get("Location")
+	if !strings.Contains(loc, "cas.ndhu.edu.tw/cas/login") {
+		t.Errorf("unexpected redirect location: %s", loc)
+	}
+	if !strings.Contains(loc, "service=") {
+		t.Error("redirect missing 'service' parameter")
+	}
+}
+
+func TestSSO_CallbackSuccess(t *testing.T) {
+	// Using the mock ticket format defined in sso.go: "dev-ticket-{casID}"
+	casID := "411221371"
+	ticket := "dev-ticket-" + casID
+
+	req := httptest.NewRequest("GET", "/api/v1/auth/sso/callback?ticket="+ticket, nil)
+	res, _ := testApp.Test(req, -1)
+
+	// Should redirect to frontend
+	assertStatus(t, res, http.StatusFound)
+	loc := res.Header.Get("Location")
+	if loc != "http://localhost:3000/" {
+		t.Errorf("unexpected redirect location: %s", loc)
+	}
+
+	// Check if user was created
+	var userCount int
+	err := testDB.Get(&userCount, "SELECT COUNT(*) FROM users WHERE cas_id = $1", casID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if userCount != 1 {
+		t.Errorf("expected 1 user with cas_id %s, got %d", casID, userCount)
+	}
+
+	// Check if cookie was set
+	cookie := res.Header.Get("Set-Cookie")
+	if !strings.Contains(cookie, "jwt=") {
+		t.Error("expected jwt cookie in Set-Cookie header")
+	}
+}
+
+func TestSSO_CallbackInvalidTicket(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/auth/sso/callback?ticket=invalid-ticket", nil)
+	res, _ := testApp.Test(req, -1)
+
+	// Mock mode expects "dev-ticket-" prefix
+	assertStatus(t, res, http.StatusUnauthorized)
+}
+
+func TestSSO_CallbackMissingTicket(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/auth/sso/callback", nil)
+	res, _ := testApp.Test(req, -1)
+
+	assertStatus(t, res, http.StatusBadRequest)
 }
