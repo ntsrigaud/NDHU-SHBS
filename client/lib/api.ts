@@ -122,6 +122,12 @@ export interface Order {
   }[];
 }
 
+export interface UploadedImage {
+  id: string;
+  preview: string;
+  cdn_url: string;
+}
+
 const api = createApi();
 
 function toAuthUser(user: ModelUser): User {
@@ -312,6 +318,16 @@ export const authApi = {
   },
   verifyEmail(token: string): Promise<ModelSwaggerMessageResponse> {
     return executeApiRequest((apiClient) => apiClient.auth.verifyEmail({ token }));
+  },
+
+export const imagesApi = {
+  async uploadImage(file: File): Promise<UploadedImage> {
+    const response = await executeApiRequest((apiClient) => apiClient.images.uploadImage({ file }));
+    return {
+      id: response.image?.id ?? '',
+      preview: response.image?.cdn_url ?? '',
+      cdn_url: response.image?.cdn_url ?? '',
+    };
   },
 };
 
