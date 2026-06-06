@@ -1,6 +1,7 @@
 package image
 
 import (
+	"io"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -68,8 +69,8 @@ func UploadImage(db *sqlx.DB, s3Svc *services.S3Service, c *fiber.Ctx) error {
 	}
 	defer f.Close()
 
-	data := make([]byte, fileHeader.Size)
-	if _, err := f.Read(data); err != nil {
+	data, err := io.ReadAll(f)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "could not read uploaded file"})
 	}
 
