@@ -123,14 +123,7 @@ func SSOCallback(db *sqlx.DB, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not generate token")
 	}
 
-	c.Cookie(&fiber.Cookie{
-		Name:     "jwt",
-		Value:    token,
-		Expires:  expiresAt,
-		HTTPOnly: true,
-		Secure:   true,
-		SameSite: "Strict",
-	})
+	setSessionCookie(c, token, expiresAt)
 
 	frontendURL := strings.TrimRight(os.Getenv("FRONTEND_BASE_URL"), "/")
 	return c.Redirect(frontendURL+"/", fiber.StatusFound)
