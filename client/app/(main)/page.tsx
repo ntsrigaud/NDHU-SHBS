@@ -69,16 +69,27 @@ function BookGrid() {
 
 export default function MarketplacePage() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold">Browse Books</h1>
-
-      <div className="mb-6">
-        <Suspense>
-          <SearchBar />
-        </Suspense>
+    <div>
+      {/* Hero */}
+      <div className="bg-primary px-4 py-10 text-primary-foreground">
+        <div className="container mx-auto max-w-2xl text-center">
+          <p className="mb-1 text-sm font-medium tracking-widest text-primary-foreground/70 uppercase">
+            國立東華大學 · National Dong Hwa University
+          </p>
+          <h1 className="text-3xl font-bold sm:text-4xl">二手書市集</h1>
+          <p className="mt-2 text-primary-foreground/80">
+            Buy and sell used textbooks with fellow NDHU students
+          </p>
+          <div className="mt-6">
+            <Suspense>
+              <SearchBar />
+            </Suspense>
+          </div>
+        </div>
       </div>
 
-      <div className="flex gap-8">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex gap-8">
         <div className="hidden w-56 flex-shrink-0 lg:block">
           <Suspense>
             <FilterSidebar />
@@ -97,6 +108,7 @@ export default function MarketplacePage() {
           >
             <BookGrid />
           </Suspense>
+        </div>
         </div>
       </div>
     </div>
