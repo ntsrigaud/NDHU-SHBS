@@ -9,34 +9,39 @@ import (
 	"shbs-server/pkg/util"
 )
 
-// HandleLogout blacklists the caller's current JWT and clears the cookie.
-// After this call the token is invalid even if it has not yet expired.
-func HandleLogout(db *sqlx.DB) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		// Prefer the httpOnly cookie; fall back to Authorization: Bearer.
-		rawToken := c.Cookies("jwt")
-		if rawToken == "" {
-			if auth := c.Get("Authorization"); len(auth) > 7 && auth[:7] == "Bearer " {
-				rawToken = auth[7:]
-			}
+// LogoutUser blacklists the caller's current JWT and clears the cookie.
+//
+// @Summary         Logout
+// @Description     Invalidates the current JWT and clears the session cookie
+// @Tags            Auth
+// @Produce         json
+// @Success         200 {object} model.SwaggerMessageResponse
+// @Failure         401 {object} model.SwaggerErrorResponse
+// @ID              logoutUser
+// @Security        BearerAuth
+// @Router          /auth/logout [post]
+func LogoutUser(db *sqlx.DB, c *fiber.Ctx) error {
+	rawToken := c.Cookies("jwt")
+	if rawToken == "" {
+		if auth := c.Get("Authorization"); len(auth) > 7 && auth[:7] == "Bearer " {
+			rawToken = auth[7:]
 		}
-
-		if rawToken != "" {
-			if claims, err := util.ParseJWT(rawToken); err == nil {
-				_ = util.InvalidateToken(db, c, rawToken, claims.ExpiresAt.Time)
-			}
-		}
-
-		// Clear the cookie regardless of whether we had a valid token.
-		c.Cookie(&fiber.Cookie{
-			Name:     "jwt",
-			Value:    "",
-			Expires:  time.Unix(0, 0),
-			HTTPOnly: true,
-			Secure:   true,
-			SameSite: "Strict",
-		})
-
-		return c.JSON(fiber.Map{"message": "logged out"})
 	}
+
+	if rawToken != "" {
+		if claims, err := util.ParseJWT(rawToken); err == nil {
+			_ = util.InvalidateToken(db, c, rawToken, claims.ExpiresAt.Time)
+		}
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "jwt",
+		Value:    "",
+		Expires:  time.Unix(0, 0),
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+	})
+
+	return c.JSON(fiber.Map{"message": "logged out"})
 }
