@@ -242,6 +242,11 @@ definitions:
       name:
         type: string
     type: object
+  model.SwaggerUploadImageResponse:
+    properties:
+      image:
+        $ref: '#/definitions/model.ImageResponse'
+    type: object
   model.User:
     properties:
       avatar_image_id:
@@ -642,6 +647,51 @@ paths:
           schema:
             $ref: '#/definitions/model.SwaggerErrorResponse'
       summary: Get image
+      tags:
+      - Images
+  /images/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Accepts a multipart file upload, stores it in S3, registers it
+        in the database, and returns the image ID and CDN URL.
+      operationId: uploadImage
+      parameters:
+      - description: Image file (JPEG, PNG, WebP; max 5 MB)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.SwaggerUploadImageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "413":
+          description: Request Entity Too Large
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload image
       tags:
       - Images
   /listings:

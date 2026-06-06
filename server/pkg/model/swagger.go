@@ -94,6 +94,12 @@ type SwaggerRegisterImageRequest struct {
 	CdnURL string `json:"cdn_url"`
 }
 
+// SwaggerUploadImageResponse is returned by POST /images/upload.
+// It contains the assigned image ID and the public CDN URL.
+type SwaggerUploadImageResponse struct {
+	Image ImageResponse `json:"image"`
+}
+
 // ── Response view types (used in Swagger docs) ───────────────────────────────
 
 // ListingWithImages enriches a BookListing with seller info and image URLs.

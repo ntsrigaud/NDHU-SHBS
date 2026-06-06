@@ -50,6 +50,25 @@ func main() {
 
 	emailSvc := &services.EmailService{}
 
+	// S3 service — required for image uploads.
+	// If AWS_BUCKET is unset the server logs a warning and image uploads return 500;
+	// all other endpoints remain unaffected.
+	var s3Svc *services.S3Service
+	if bucket := os.Getenv("AWS_BUCKET"); bucket != "" {
+		var s3Err error
+		s3Svc, s3Err = services.NewS3Service(
+			bucket,
+			os.Getenv("AWS_REGION"),
+			os.Getenv("CLOUDFRONT_URL"),
+		)
+		if s3Err != nil {
+			log.Printf("warn: S3 service unavailable (%v) — image uploads will fail", s3Err)
+			s3Svc = nil
+		}
+	} else {
+		log.Println("warn: AWS_BUCKET not set — image uploads disabled")
+	}
+
 	scheduler := services.SetupScheduler(6*time.Hour, func() {
 		util.DeleteExpiredTokens(db)
 		util.DeleteExpiredVerificationTokens(db)
@@ -90,6 +109,7 @@ func main() {
 	app.Put("/api/v1/users/me", authMiddleware, func(c *fiber.Ctx) error { return user.UpdateMe(db, c) })
 
 	// ── Image routes ──────────────────────────────────────────────────────────
+	app.Post("/api/v1/images/upload", authMiddleware, func(c *fiber.Ctx) error { return image.UploadImage(db, s3Svc, c) })
 	app.Post("/api/v1/images", authMiddleware, func(c *fiber.Ctx) error { return image.RegisterImage(db, c) })
 	app.Get("/api/v1/images/:id", func(c *fiber.Ctx) error { return image.GetImage(db, c) })
 

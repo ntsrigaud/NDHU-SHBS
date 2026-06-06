@@ -156,6 +156,10 @@ export interface ModelSwaggerUpdateUserRequest {
   name?: string;
 }
 
+export interface ModelSwaggerUploadImageResponse {
+  image?: ModelImageResponse;
+}
+
 export interface ModelUser {
   avatar_image_id?: string;
   cas_id?: string;
@@ -655,6 +659,35 @@ export class Api<
         body: data,
         secure: true,
         type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+
+    /**
+     * @description Accepts a multipart file upload, stores it in S3, registers it in the database, and returns the image ID and CDN URL.
+     *
+     * @tags Images
+     * @name UploadImage
+     * @summary Upload image
+     * @request POST:/images/upload
+     * @secure
+     */
+    uploadImage: (
+      data: {
+        /**
+         * Image file (JPEG, PNG, WebP; max 5 MB)
+         * @format binary
+         */
+        file: File;
+      },
+      params: RequestParams = {},
+    ) =>
+      this.request<ModelSwaggerUploadImageResponse, ModelSwaggerErrorResponse>({
+        path: `/images/upload`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.FormData,
         format: "json",
         ...params,
       }),
