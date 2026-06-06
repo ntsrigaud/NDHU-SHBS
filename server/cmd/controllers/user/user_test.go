@@ -210,9 +210,8 @@ func TestGetMe_Success(t *testing.T) {
 
 	var body map[string]any
 	decodeBody(t, res, &body)
-	user, _ := body["user"].(map[string]any)
-	if user["email"] != email {
-		t.Fatalf("unexpected email: %v", user["email"])
+	if body["email"] != email {
+		t.Fatalf("unexpected email: %v", body["email"])
 	}
 }
 
@@ -232,9 +231,8 @@ func TestUpdateMe_NameSuccess(t *testing.T) {
 
 	var body map[string]any
 	decodeBody(t, res, &body)
-	user, _ := body["user"].(map[string]any)
-	if user["name"] != "Updated Name" {
-		t.Fatalf("name not updated, got: %v", user["name"])
+	if body["name"] != "Updated Name" {
+		t.Fatalf("name not updated, got: %v", body["name"])
 	}
 }
 

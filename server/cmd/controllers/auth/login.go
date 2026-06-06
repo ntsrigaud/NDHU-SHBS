@@ -54,14 +54,7 @@ func LoginUser(db *sqlx.DB, c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "could not generate token"})
 	}
 
-	c.Cookie(&fiber.Cookie{
-		Name:     "jwt",
-		Value:    token,
-		Expires:  expiresAt,
-		HTTPOnly: true,
-		Secure:   true,
-		SameSite: "Strict",
-	})
+	setSessionCookie(c, token, expiresAt)
 
 	return c.JSON(model.SwaggerLoginResponse{
 		Token:     token,
