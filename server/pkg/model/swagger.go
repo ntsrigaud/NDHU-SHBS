@@ -140,15 +140,15 @@ type ListingWithImages struct {
 
 // CartItemResponse represents a single item in the cart.
 type CartItemResponse struct {
-	ID        uuid.UUID        `db:"id"         json:"id"`
+	ID        uuid.UUID         `db:"id"         json:"id"`
 	Listing   ListingWithImages `json:"listing"`
-	CreatedAt time.Time        `db:"created_at" json:"added_at"`
+	CreatedAt time.Time         `db:"created_at" json:"added_at"`
 }
 
 // OrderItemResponse represents a book within an order.
 type OrderItemResponse struct {
-	ID              uuid.UUID        `db:"id"                json:"id"`
-	PriceAtPurchase decimal.Decimal  `db:"price_at_purchase" json:"price_at_purchase"`
+	ID              uuid.UUID         `db:"id"                json:"id"`
+	PriceAtPurchase decimal.Decimal   `db:"price_at_purchase" json:"price_at_purchase"`
 	Listing         ListingWithImages `json:"listing"`
 }
 

@@ -130,8 +130,8 @@ export default function ListingForm({
                 {aiCondition && (
                   <p className="text-xs text-muted-foreground">
                     AI suggests:{' '}
-                    <span className="font-medium capitalize">{aiCondition.condition}</span>
-                    {' '}({Math.round(aiCondition.confidence * 100)}% confidence)
+                    <span className="font-medium capitalize">{aiCondition.condition}</span> (
+                    {Math.round(aiCondition.confidence * 100)}% confidence)
                   </p>
                 )}
                 <Select onValueChange={field.onChange} defaultValue={field.value}>

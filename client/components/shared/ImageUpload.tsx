@@ -20,17 +20,14 @@ export default function ImageUpload({ onChange, onAiResult }: Props) {
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
 
-  const uploadFile = useCallback(
-    async (file: File): Promise<UploadedImage | null> => {
-      try {
-        return await imagesApi.uploadImage(file);
-      } catch {
-        toast.error(`Failed to upload ${file.name}`);
-        return null;
-      }
-    },
-    [],
-  );
+  const uploadFile = useCallback(async (file: File): Promise<UploadedImage | null> => {
+    try {
+      return await imagesApi.uploadImage(file);
+    } catch {
+      toast.error(`Failed to upload ${file.name}`);
+      return null;
+    }
+  }, []);
 
   const analyzeCondition = useCallback(
     async (imageId: string) => {
@@ -40,7 +37,7 @@ export default function ImageUpload({ onChange, onAiResult }: Props) {
         const result = await aiApi.analyzeCondition(imageId);
         onAiResult(result);
         toast.info(
-          `AI detected: ${result.condition} condition (${Math.round(result.confidence * 100)}% confidence)`,
+          `AI detected: ${result.condition} condition (${Math.round(result.confidence * 100)}% confidence)`
         );
       } catch {
         // AI is best-effort — don't block the seller
@@ -48,7 +45,7 @@ export default function ImageUpload({ onChange, onAiResult }: Props) {
         setAnalyzing(false);
       }
     },
-    [onAiResult],
+    [onAiResult]
   );
 
   const onDrop = useCallback(
@@ -68,7 +65,7 @@ export default function ImageUpload({ onChange, onAiResult }: Props) {
         await analyzeCondition(uploaded[0].id);
       }
     },
-    [images, uploadFile, analyzeCondition, onChange],
+    [images, uploadFile, analyzeCondition, onChange]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -90,8 +87,10 @@ export default function ImageUpload({ onChange, onAiResult }: Props) {
         {...getRootProps()}
         className={cn(
           'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors',
-          isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50',
-          images.length >= MAX_FILES && 'cursor-not-allowed opacity-50',
+          isDragActive
+            ? 'border-primary bg-primary/5'
+            : 'border-muted-foreground/25 hover:border-primary/50',
+          images.length >= MAX_FILES && 'cursor-not-allowed opacity-50'
         )}
       >
         <input {...getInputProps()} />

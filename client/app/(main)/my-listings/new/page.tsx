@@ -12,7 +12,10 @@ export default function NewListingPage() {
   const router = useRouter();
   const { mutate: createListing, isPending } = useCreateListing();
   const [imageIds, setImageIds] = useState<string[]>([]);
-  const [aiCondition, setAiCondition] = useState<{ condition: Condition; confidence: number } | null>(null);
+  const [aiCondition, setAiCondition] = useState<{
+    condition: Condition;
+    confidence: number;
+  } | null>(null);
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-8">
@@ -25,7 +28,7 @@ export default function NewListingPage() {
           onAiResult={(result) => {
             setAiCondition(result);
             toast.info(
-              `AI suggests: ${result.condition} (${Math.round(result.confidence * 100)}%)`,
+              `AI suggests: ${result.condition} (${Math.round(result.confidence * 100)}%)`
             );
           }}
         />
@@ -41,7 +44,7 @@ export default function NewListingPage() {
                 router.push('/my-listings');
               },
               onError: (err) => toast.error(err.message ?? 'Failed to create listing'),
-            },
+            }
           )
         }
         isPending={isPending}
