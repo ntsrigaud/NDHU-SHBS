@@ -22,7 +22,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from main import app
-from routers.metadata import _decode_isbn
+from routers.metadata import _content_words, _decode_isbn
 
 _ISBN = "9780131103627"  # The C Programming Language
 _IMG = "dGVzdA=="  # placeholder base64 (not a real image)
@@ -76,6 +76,19 @@ def test_decode_isbn_from_real_barcode() -> None:
 
 def test_decode_isbn_returns_none_for_non_image() -> None:
     assert _decode_isbn(_IMG) is None
+
+
+# ── Query cleaning ──────────────────────────────────────────────────────────
+
+def test_content_words_strips_publisher_and_noise() -> None:
+    # Mimics the real failure: "O'Reilly" + edition + a merged OCR token bury
+    # the actual title words.
+    lines = ["O'Reilly", "Generative Deep Learning", "Second Edition", "thisremarkablenew"]
+    words = _content_words(lines)
+    assert words[:3] == ["generative", "deep", "learning"]  # title leads the query
+    assert "reilly" not in words  # publisher dropped
+    assert "second" not in words and "edition" not in words  # edition markers dropped
+    assert "thisremarkablenew" not in words  # merged-word garbage dropped
 
 
 # ── Stage 1: barcode pass ───────────────────────────────────────────────────

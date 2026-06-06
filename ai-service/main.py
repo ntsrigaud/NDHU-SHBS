@@ -64,6 +64,7 @@ app = FastAPI(
     version="0.1.0",
     description="Internal AI service for book metadata extraction and condition classification.",
     lifespan=lifespan,
+    root_path="/ai",
 )
 
 # Default client used by tests that skip the lifespan context (TestClient without `with`).

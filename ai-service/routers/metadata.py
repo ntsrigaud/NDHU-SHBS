@@ -234,6 +234,20 @@ _EDITION_NOISE = frozenset(
         "revised", "updated", "expanded", "reprint", "reprinted", "volume", "vol",
     }
 )
+# Publisher / imprint words. These show up large on covers (e.g. "O'Reilly")
+# and otherwise lead the query with a word no book *title* contains, which
+# drives the catalog's conjunctive search to zero hits.
+_PUBLISHER_NOISE = frozenset(
+    {
+        "oreilly", "reilly", "press", "publishing", "publications", "publisher",
+        "manning", "packt", "apress", "wiley", "springer", "pearson", "prentice",
+        "mcgraw", "addison", "wesley", "wrox", "sams", "starch",
+    }
+)
+# A token longer than this is almost always two OCR words merged together
+# (e.g. "thisremarkablenew"); such garbage hurts search recall. Kept above the
+# length of normal long title words like "characterization" (16).
+_MAX_TOKEN_LEN = 16
 _SUBTITLE_SPLIT = re.compile(r"[:–—\-]")  # colon / en-dash / em-dash / hyphen
 
 
@@ -255,7 +269,9 @@ def _content_words(lines: list[str]) -> list[str]:
     out: list[str] = []
     for line in lines:
         for word in re.sub(r"[^a-z0-9]+", " ", line.lower()).split():
-            if len(word) < 2 or word in _STOPWORDS or word in _EDITION_NOISE:
+            if len(word) < 2 or len(word) > _MAX_TOKEN_LEN:
+                continue
+            if word in _STOPWORDS or word in _EDITION_NOISE or word in _PUBLISHER_NOISE:
                 continue
             if word not in seen:
                 seen.add(word)
@@ -296,18 +312,24 @@ def _best_candidate(
 async def analyze_metadata(body: MetadataRequest, request: Request) -> MetadataResponse:
     """Extract book metadata (title, author, ISBN) from one or more photos."""
     client: httpx.AsyncClient = request.app.state.http_client
+    logger.info("metadata: received %d image(s)", len(body.images_base64))
 
     # Stage 1 — barcode pass across all images (exact when a barcode is legible).
-    for image_b64 in body.images_base64:
+    for idx, image_b64 in enumerate(body.images_base64):
         isbn = _decode_isbn(image_b64)
         if isbn is not None:
+            logger.info("metadata: BARCODE path — ISBN %s decoded from image %d", isbn, idx)
             result = await _lookup_openlibrary(client, isbn)
             if result is None:
                 result = await _lookup_google_books(client, isbn)
             if result is None:
+                logger.info("metadata: ISBN %s not found in any catalog", isbn)
                 return MetadataResponse(title=None, author=None, isbn=isbn, confidence=0.5)
             title, author = result
+            logger.info("metadata: resolved %r via ISBN lookup", title)
             return MetadataResponse(title=title, author=author, isbn=isbn, confidence=0.95)
+
+    logger.info("metadata: no barcode in any image — using OCR fallback")
 
     # Stage 2 — OCR fallback: read text from the photos and search the catalog.
     text_lines: list[str] = []
@@ -318,11 +340,13 @@ async def analyze_metadata(body: MetadataRequest, request: Request) -> MetadataR
         # OCR is CPU-bound; run it off the event loop.
         text_lines.extend(await run_in_threadpool(_run_ocr, raw))
 
+    logger.info("metadata: OCR recognised %d line(s): %s", len(text_lines), text_lines)
     if not text_lines:
         return MetadataResponse(title=None, author=None, isbn=None, confidence=0.0)
 
     ocr_tokens = _tokens(" ".join(text_lines))
     words = _content_words(text_lines)
+    logger.info("metadata: query words (noise stripped): %s", words)
     if not words:
         return MetadataResponse(title=None, author=None, isbn=None, confidence=0.0)
 
@@ -333,13 +357,18 @@ async def analyze_metadata(body: MetadataRequest, request: Request) -> MetadataR
     # Try a short title-field query first, then progressively broader fallbacks.
     # OpenLibrary is tried before Google Books (which 429s unauthenticated calls).
     # Each result is accepted only if its title overlaps the OCR text.
-    attempts: list[tuple] = [
-        (_search_openlibrary, ({"title": short_query},)),
-        (_search_openlibrary, ({"q": full_query},)),
-        (_search_google_books, (full_query,)),
+    attempts: list[tuple[str, object, tuple]] = [
+        ("OpenLibrary title", _search_openlibrary, ({"title": short_query},)),
+        ("OpenLibrary q", _search_openlibrary, ({"q": full_query},)),
+        ("Google Books q", _search_google_books, (full_query,)),
     ]
-    for search, args in attempts:
-        best = _best_candidate(await search(client, *args), ocr_tokens)
+    for label, search, args in attempts:
+        candidates = await search(client, *args)
+        best = _best_candidate(candidates, ocr_tokens)
+        logger.info(
+            "metadata: %s search %r -> %d candidate(s), accepted=%r",
+            label, args[0], len(candidates), best[0] if best else None,
+        )
         if best is not None:
             title, author, isbn = best
             return MetadataResponse(
@@ -347,4 +376,5 @@ async def analyze_metadata(body: MetadataRequest, request: Request) -> MetadataR
             )
 
     # OCR text recognised, but no catalog result matched it confidently.
+    logger.info("metadata: no catalog result matched the OCR text confidently")
     return MetadataResponse(title=None, author=None, isbn=None, confidence=0.0)
