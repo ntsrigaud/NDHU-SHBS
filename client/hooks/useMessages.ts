@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { messagesApi, type Conversation, type Message } from '@/lib/api';
+import { useAppSelector } from '@/lib/store';
 
 export function useMessages(listingId: string) {
   return useQuery({
@@ -29,10 +30,13 @@ export function useMarkRead(messageId: string) {
 }
 
 export function useUnreadCount() {
+  const user = useAppSelector((state) => state.auth.user);
+
   return useQuery({
     queryKey: ['unread-count'],
     queryFn: async () => ({ count: await messagesApi.getUnreadCount() }),
-    refetchInterval: 10000,
+    enabled: !!user,
+    refetchInterval: user ? 10000 : false,
   });
 }
 
