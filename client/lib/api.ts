@@ -325,6 +325,9 @@ export const authApi = {
   verifyEmail(token: string): Promise<ModelSwaggerMessageResponse> {
     return executeApiRequest((apiClient) => apiClient.auth.verifyEmail({ token }));
   },
+  resendVerification(email: string): Promise<ModelSwaggerMessageResponse> {
+    return executeApiRequest((apiClient) => apiClient.auth.resendVerification({ email }));
+  },
 };
 
 export const imagesApi = {
