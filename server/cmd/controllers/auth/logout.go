@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"time"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
 
@@ -34,14 +32,7 @@ func LogoutUser(db *sqlx.DB, c *fiber.Ctx) error {
 		}
 	}
 
-	c.Cookie(&fiber.Cookie{
-		Name:     "jwt",
-		Value:    "",
-		Expires:  time.Unix(0, 0),
-		HTTPOnly: true,
-		Secure:   true,
-		SameSite: "Strict",
-	})
+	clearSessionCookie(c)
 
 	return c.JSON(fiber.Map{"message": "logged out"})
 }
