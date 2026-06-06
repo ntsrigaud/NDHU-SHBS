@@ -13,7 +13,7 @@
     "generate:openapi:json": "swagger2openapi ../server/docs/swagger.json -o ../server/docs/openapi.json",
     "generate:openapi:yaml": "swagger2openapi ../server/docs/swagger.json -o ../server/docs/openapi.yaml --yaml",
     "generate:openapi": "npm run generate:openapi:json && npm run generate:openapi:yaml",
-    "generate:api": "swagger-typescript-api -p ../server/docs/openapi.json -o ./generated -n api.ts --no-client"
+    "generate:api": "swagger-typescript-api generate -p ../server/docs/openapi.json -o ./generated -n api.ts --no-client"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
