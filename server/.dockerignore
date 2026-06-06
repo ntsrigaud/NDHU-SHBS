@@ -6,7 +6,6 @@
 *_test.go
 Dockerfile
 docker-compose.yml
-docs/
 vendor/
 bin/
 tmp/
