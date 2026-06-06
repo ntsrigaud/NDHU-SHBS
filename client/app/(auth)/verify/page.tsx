@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { apiFetch } from '@/lib/api';
+import { authApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -23,7 +23,8 @@ function VerifyContent() {
       return;
     }
 
-    apiFetch<{ message: string }>(`/auth/verify?token=${encodeURIComponent(token)}`)
+    authApi
+      .verifyEmail(token)
       .then((res) => {
         setStatus('success');
         setMessage(res.message ?? 'Your email has been verified!');
