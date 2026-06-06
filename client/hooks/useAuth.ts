@@ -2,39 +2,21 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
+import { authApi, type LoginInput, type RegisterInput } from '@/lib/api';
 import { useAppDispatch } from '@/lib/store';
-import { setUser, clearCredentials, type User } from '@/slices/authSlice';
+import { setUser, clearCredentials } from '@/slices/authSlice';
 import { clearCart } from '@/slices/cartSlice';
-
-interface LoginPayload {
-  email: string;
-  password: string;
-}
-
-interface RegisterPayload {
-  name: string;
-  email: string;
-  password: string;
-}
-
-interface LoginResponse {
-  user: User;
-  expires_at: string;
-}
 
 export function useLogin() {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
   return useMutation({
-    mutationFn: (data: LoginPayload) =>
-      apiFetch<LoginResponse>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
+    mutationFn: (data: LoginInput) => authApi.login(data),
     onSuccess: (res) => {
-      dispatch(setUser(res.user));
+      if (res.user) {
+        dispatch(setUser(res.user));
+      }
       router.push('/');
     },
   });
@@ -44,11 +26,7 @@ export function useRegister() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: (data: RegisterPayload) =>
-      apiFetch<User>('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
+    mutationFn: (data: RegisterInput) => authApi.register(data),
     onSuccess: () => {
       router.push('/login?registered=1');
     },
@@ -60,7 +38,7 @@ export function useLogout() {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: () => apiFetch<void>('/auth/logout', { method: 'POST' }),
+    mutationFn: () => authApi.logout(),
     onSettled: () => {
       dispatch(clearCredentials());
       dispatch(clearCart());
