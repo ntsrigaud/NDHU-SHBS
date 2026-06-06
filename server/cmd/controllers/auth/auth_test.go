@@ -78,8 +78,12 @@ func TestMain(m *testing.M) {
 
 	testApp = fiber.New()
 	testApp.Use(middleware.ErrorHandler())
-	api := testApp.Group("/api/v1")
-	auth.Mount(api, testDB, &services.EmailService{})
+	emailSvc := &services.EmailService{}
+	testApp.Post("/api/v1/auth/register", func(c *fiber.Ctx) error { return auth.RegisterUser(testDB, emailSvc, c) })
+	testApp.Post("/api/v1/auth/login", func(c *fiber.Ctx) error { return auth.LoginUser(testDB, c) })
+	testApp.Post("/api/v1/auth/logout", func(c *fiber.Ctx) error { return auth.LogoutUser(testDB, c) })
+	testApp.Get("/api/v1/auth/verify", func(c *fiber.Ctx) error { return auth.VerifyEmail(testDB, c) })
+	testApp.Post("/api/v1/auth/resend-verification", func(c *fiber.Ctx) error { return auth.ResendVerification(testDB, emailSvc, c) })
 
 	os.Exit(m.Run())
 }
@@ -171,19 +175,12 @@ func TestRegister_Success(t *testing.T) {
 	var body map[string]any
 	decodeBody(t, res, &body)
 
-	user, ok := body["user"].(map[string]any)
+	msg, ok := body["message"].(string)
 	if !ok {
-		t.Fatal("response missing 'user' object")
+		t.Fatal("response missing 'message' field")
 	}
-	if user["email"] != "register_success@test.com" {
-		t.Errorf("unexpected email: %v", user["email"])
-	}
-	// password_hash must never appear in JSON (security regression)
-	if _, found := user["password_hash"]; found {
-		t.Error("password_hash must not appear in JSON response")
-	}
-	if _, found := user["PasswordHash"]; found {
-		t.Error("PasswordHash must not appear in JSON response")
+	if msg != "an email was sent to your account, please verify it before logging in" {
+		t.Errorf("unexpected message: %v", msg)
 	}
 }
 
