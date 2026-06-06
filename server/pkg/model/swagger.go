@@ -100,6 +100,21 @@ type SwaggerUploadImageResponse struct {
 	Image ImageResponse `json:"image"`
 }
 
+// ── AI ───────────────────────────────────────────────────────────────────────
+
+// SwaggerAnalyzeConditionRequest is the request body for POST /ai/condition.
+type SwaggerAnalyzeConditionRequest struct {
+	// ImageID is the UUID of an already-uploaded image to classify.
+	ImageID string `json:"image_id"`
+}
+
+// SwaggerAnalyzeConditionResponse is returned by POST /ai/condition.
+type SwaggerAnalyzeConditionResponse struct {
+	// Condition is one of: "good", "moderate", "poor".
+	Condition  string  `json:"condition"`
+	Confidence float64 `json:"confidence"`
+}
+
 // ── Response view types (used in Swagger docs) ───────────────────────────────
 
 // ListingWithImages enriches a BookListing with seller info and image URLs.
