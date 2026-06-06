@@ -322,6 +322,10 @@ export const authApi = {
   logout(): Promise<ModelSwaggerMessageResponse> {
     return executeApiRequest((apiClient) => apiClient.auth.logoutUser());
   },
+  async getCurrentUser(): Promise<User> {
+    const response = await executeApiRequest((apiClient) => apiClient.users.getMe());
+    return toAuthUser(response);
+  },
   verifyEmail(token: string): Promise<ModelSwaggerMessageResponse> {
     return executeApiRequest((apiClient) => apiClient.auth.verifyEmail({ token }));
   },

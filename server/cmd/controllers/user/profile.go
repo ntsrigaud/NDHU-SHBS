@@ -34,7 +34,7 @@ func GetMe(db *sqlx.DB, c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "user not found"})
 	}
 
-	return c.JSON(fiber.Map{"user": user})
+	return c.JSON(user)
 }
 
 // UpdateMe updates editable fields on the authenticated user's profile.
@@ -120,7 +120,7 @@ func UpdateMe(db *sqlx.DB, c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "could not update user"})
 	}
 
-	return c.JSON(fiber.Map{"user": user})
+	return c.JSON(user)
 }
 
 func userIDFromContext(c *fiber.Ctx) (uuid.UUID, error) {
