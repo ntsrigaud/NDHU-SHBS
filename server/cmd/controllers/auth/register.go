@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,6 +16,8 @@ import (
 	"shbs-server/pkg/services"
 	"shbs-server/pkg/util"
 )
+
+var ndhuStudentEmailPattern = regexp.MustCompile(`^\d{9}@gms\.ndhu\.edu\.tw$`)
 
 // RegisterUser creates a new local user account and sends a verification email.
 //
@@ -45,6 +48,11 @@ func RegisterUser(db *sqlx.DB, emailSvc *services.EmailService, c *fiber.Ctx) er
 	}
 	if req.Email == "" {
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{"error": "email is required"})
+	}
+	if !ndhuStudentEmailPattern.MatchString(req.Email) {
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+			"error": "email must be a valid NDHU student address in the format student_id@gms.ndhu.edu.tw",
+		})
 	}
 	if !util.IsStrongPassword(req.Password) {
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
