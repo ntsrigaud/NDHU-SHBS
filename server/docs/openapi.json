@@ -13,6 +13,84 @@
         "version": "1.0"
     },
     "paths": {
+        "/ai/condition": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Classifies the condition of a book image using the AI microservice. Accepts the ID of an already-uploaded image.",
+                "tags": [
+                    "AI"
+                ],
+                "summary": "Analyze book condition",
+                "operationId": "analyzeCondition",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/model.SwaggerAnalyzeConditionRequest"
+                            }
+                        }
+                    },
+                    "description": "Image ID to analyze",
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/model.SwaggerAnalyzeConditionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/model.SwaggerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/model.SwaggerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/model.SwaggerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/model.SwaggerErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Authenticates a user with email and password, returns a JWT token",
@@ -2308,6 +2386,27 @@
                 "properties": {
                     "listing_id": {
                         "type": "string"
+                    }
+                }
+            },
+            "model.SwaggerAnalyzeConditionRequest": {
+                "type": "object",
+                "properties": {
+                    "image_id": {
+                        "description": "ImageID is the UUID of an already-uploaded image to classify.",
+                        "type": "string"
+                    }
+                }
+            },
+            "model.SwaggerAnalyzeConditionResponse": {
+                "type": "object",
+                "properties": {
+                    "condition": {
+                        "description": "Condition is one of: \"good\", \"moderate\", \"poor\".",
+                        "type": "string"
+                    },
+                    "confidence": {
+                        "type": "number"
                     }
                 }
             },

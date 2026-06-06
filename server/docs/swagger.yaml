@@ -135,6 +135,20 @@ definitions:
       listing_id:
         type: string
     type: object
+  model.SwaggerAnalyzeConditionRequest:
+    properties:
+      image_id:
+        description: ImageID is the UUID of an already-uploaded image to classify.
+        type: string
+    type: object
+  model.SwaggerAnalyzeConditionResponse:
+    properties:
+      condition:
+        description: 'Condition is one of: "good", "moderate", "poor".'
+        type: string
+      confidence:
+        type: number
+    type: object
   model.SwaggerCreateListingRequest:
     properties:
       author:
@@ -278,6 +292,48 @@ info:
   title: NDHU Second-Hand Book Store API
   version: "1.0"
 paths:
+  /ai/condition:
+    post:
+      consumes:
+      - application/json
+      description: Classifies the condition of a book image using the AI microservice.
+        Accepts the ID of an already-uploaded image.
+      operationId: analyzeCondition
+      parameters:
+      - description: Image ID to analyze
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SwaggerAnalyzeConditionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SwaggerAnalyzeConditionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Analyze book condition
+      tags:
+      - AI
   /auth/login:
     post:
       consumes:

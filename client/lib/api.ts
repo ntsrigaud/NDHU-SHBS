@@ -18,6 +18,7 @@ import {
 import type { BookListing, ListingsFilter } from '@/lib/types';
 import type { CartItem } from '@/slices/cartSlice';
 import type { User } from '@/slices/authSlice';
+import type { Condition } from '@/lib/types';
 
 type SecurityData = {
   token?: string;
@@ -126,6 +127,11 @@ export interface UploadedImage {
   id: string;
   preview: string;
   cdn_url: string;
+}
+
+export interface AiConditionResult {
+  condition: Condition;
+  confidence: number;
 }
 
 const api = createApi();
@@ -319,6 +325,7 @@ export const authApi = {
   verifyEmail(token: string): Promise<ModelSwaggerMessageResponse> {
     return executeApiRequest((apiClient) => apiClient.auth.verifyEmail({ token }));
   },
+};
 
 export const imagesApi = {
   async uploadImage(file: File): Promise<UploadedImage> {
@@ -327,6 +334,18 @@ export const imagesApi = {
       id: response.image?.id ?? '',
       preview: response.image?.cdn_url ?? '',
       cdn_url: response.image?.cdn_url ?? '',
+    };
+  },
+};
+
+export const aiApi = {
+  async analyzeCondition(imageId: string): Promise<AiConditionResult> {
+    const response = await executeApiRequest((apiClient) =>
+      apiClient.ai.analyzeCondition({ image_id: imageId })
+    );
+    return {
+      condition: response.condition as Condition,
+      confidence: response.confidence ?? 0,
     };
   },
 };

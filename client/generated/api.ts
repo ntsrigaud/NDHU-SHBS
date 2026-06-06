@@ -88,6 +88,17 @@ export interface ModelSwaggerAddToCartRequest {
   listing_id?: string;
 }
 
+export interface ModelSwaggerAnalyzeConditionRequest {
+  /** ImageID is the UUID of an already-uploaded image to classify. */
+  image_id?: string;
+}
+
+export interface ModelSwaggerAnalyzeConditionResponse {
+  /** Condition is one of: "good", "moderate", "poor". */
+  condition?: string;
+  confidence?: number;
+}
+
 export interface ModelSwaggerCreateListingRequest {
   author?: string;
   condition?: string;
@@ -440,6 +451,33 @@ export class HttpClient<SecurityDataType = unknown> {
 export class Api<
   SecurityDataType extends unknown,
 > extends HttpClient<SecurityDataType> {
+  ai = {
+    /**
+     * @description Classifies the condition of a book image using the AI microservice. Accepts the ID of an already-uploaded image.
+     *
+     * @tags AI
+     * @name AnalyzeCondition
+     * @summary Analyze book condition
+     * @request POST:/ai/condition
+     * @secure
+     */
+    analyzeCondition: (
+      data: ModelSwaggerAnalyzeConditionRequest,
+      params: RequestParams = {},
+    ) =>
+      this.request<
+        ModelSwaggerAnalyzeConditionResponse,
+        ModelSwaggerErrorResponse
+      >({
+        path: `/ai/condition`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        format: "json",
+        ...params,
+      }),
+  };
   auth = {
     /**
      * @description Authenticates a user with email and password, returns a JWT token
