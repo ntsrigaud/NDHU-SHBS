@@ -4,8 +4,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/shopspring/decimal"
 )
+
+// StringSlice scans PostgreSQL text[] values into a JSON-friendly Go slice.
+// It is used for response view models where Swagger should still expose an
+// array of strings rather than a pq-specific implementation detail.
+type StringSlice []string
+
+func (s *StringSlice) Scan(src any) error {
+	return pq.Array((*[]string)(s)).Scan(src)
+}
 
 // Listing condition values — mirror the DB CHECK constraint.
 const (

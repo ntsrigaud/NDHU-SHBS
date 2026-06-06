@@ -11,6 +11,7 @@ package model_test
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 
@@ -126,6 +127,18 @@ func TestListingStatusConstants(t *testing.T) {
 		if v == "" {
 			t.Errorf("listing status constant must not be empty string")
 		}
+	}
+}
+
+func TestStringSlice_ScanPostgresArray(t *testing.T) {
+	var values model.StringSlice
+	if err := values.Scan([]byte(`{"https://cdn.example.com/a.jpg","https://cdn.example.com/b.jpg"}`)); err != nil {
+		t.Fatalf("Scan failed: %v", err)
+	}
+
+	want := model.StringSlice{"https://cdn.example.com/a.jpg", "https://cdn.example.com/b.jpg"}
+	if !reflect.DeepEqual(values, want) {
+		t.Fatalf("unexpected values: got %v want %v", values, want)
 	}
 }
 
