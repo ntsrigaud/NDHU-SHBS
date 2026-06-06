@@ -74,9 +74,17 @@ func TestMain(m *testing.M) {
 
 	testApp = fiber.New()
 	testApp.Use(middleware.ErrorHandler())
-	api := testApp.Group("/api/v1")
-	auth.Mount(api, testDB, &services.EmailService{})
-	notification.Mount(api, testDB)
+	emailSvc := &services.EmailService{}
+	authMW := middleware.Auth(testDB)
+	testApp.Post("/api/v1/auth/register", func(c *fiber.Ctx) error { return auth.RegisterUser(testDB, emailSvc, c) })
+	testApp.Post("/api/v1/auth/login", func(c *fiber.Ctx) error { return auth.LoginUser(testDB, c) })
+	testApp.Post("/api/v1/auth/logout", func(c *fiber.Ctx) error { return auth.LogoutUser(testDB, c) })
+	testApp.Get("/api/v1/auth/verify", func(c *fiber.Ctx) error { return auth.VerifyEmail(testDB, c) })
+	testApp.Post("/api/v1/auth/resend-verification", func(c *fiber.Ctx) error { return auth.ResendVerification(testDB, emailSvc, c) })
+	testApp.Get("/api/v1/notifications", authMW, func(c *fiber.Ctx) error { return notification.GetNotifications(testDB, c) })
+	testApp.Get("/api/v1/notifications/unread-count", authMW, func(c *fiber.Ctx) error { return notification.GetUnreadNotificationCount(testDB, c) })
+	testApp.Patch("/api/v1/notifications/read-all", authMW, func(c *fiber.Ctx) error { return notification.MarkAllNotificationsAsRead(testDB, c) })
+	testApp.Patch("/api/v1/notifications/:id/read", authMW, func(c *fiber.Ctx) error { return notification.MarkNotificationAsRead(testDB, c) })
 
 	os.Exit(m.Run())
 }

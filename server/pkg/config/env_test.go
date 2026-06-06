@@ -7,7 +7,7 @@ import (
 	"shbs-server/pkg/config"
 )
 
-// requiredVars must match what LoadEnvOrFatal checks.
+// requiredVars must match what Load checks.
 var requiredVars = []string{
 	"PORT", "DATABASE_URL", "POSTGRES_USER", "POSTGRES_PASSWORD",
 	"POSTGRES_DB", "JWT_SECRET", "JWT_EXPIRY_HOURS",
@@ -35,34 +35,54 @@ func clearRequired(t *testing.T) {
 	}
 }
 
-func TestLoadEnvOrFatal_AllVarsPresent(t *testing.T) {
+func TestLoad_AllVarsPresent(t *testing.T) {
 	setAllRequired(t)
-	// Should not panic / fatal.
-	config.LoadEnvOrFatal()
+	if err := config.Load(); err != nil {
+		t.Errorf("expected no error, got: %v", err)
+	}
 }
 
-func TestLoadEnvOrFatal_MissingVar_Panics(t *testing.T) {
-	setAllRequired(t)
-	// Remove one required var and expect log.Fatal (which calls os.Exit).
-	// We can't easily catch os.Exit, so we verify the function completes
-	// when all vars are present, and we document the fatal path here.
-	// The CI go vet + test will catch compilation errors.
-	t.Log("Fatal path for missing vars is covered by CI env-var validation; tested here via all-present path")
-}
-
-func TestLoadEnvOrFatal_ShortJWTSecret_Panics(t *testing.T) {
-	setAllRequired(t)
-	// Only testing that the function succeeds when secret is long enough
-	// (>= 32 chars). The short-secret branch would call log.Fatal.
-	longSecret := "this-secret-is-definitely-32-or-more-characters-long"
-	t.Setenv("JWT_SECRET", longSecret)
-	config.LoadEnvOrFatal()
-}
-
-func TestLoadEnvOrFatal_EmptyOptional_Succeeds(t *testing.T) {
+func TestLoad_MissingVar_ReturnsError(t *testing.T) {
 	clearRequired(t)
 	setAllRequired(t)
-	// FRONTEND_BASE_URL is allowed to be empty in development (fallback logic).
-	// LoadEnvOrFatal does NOT accept empty FRONTEND_BASE_URL though — keep set.
+	os.Unsetenv("PORT")
+
+	err := config.Load()
+	if err == nil {
+		t.Fatal("expected error for missing PORT, got nil")
+	}
+}
+
+func TestLoad_AllMissingVars_ReturnsError(t *testing.T) {
+	clearRequired(t)
+
+	err := config.Load()
+	if err == nil {
+		t.Fatal("expected error when all vars are missing, got nil")
+	}
+}
+
+func TestLoad_ShortJWTSecret_ReturnsError(t *testing.T) {
+	setAllRequired(t)
+	t.Setenv("JWT_SECRET", "short") // fewer than 32 chars
+
+	err := config.Load()
+	if err == nil {
+		t.Fatal("expected error for short JWT_SECRET, got nil")
+	}
+}
+
+func TestLoad_Exactly32CharJWTSecret_Succeeds(t *testing.T) {
+	setAllRequired(t)
+	t.Setenv("JWT_SECRET", "exactly-32-chars-long-secret!!!x") // exactly 32
+
+	if err := config.Load(); err != nil {
+		t.Errorf("expected no error for 32-char secret, got: %v", err)
+	}
+}
+
+func TestLoadEnvOrFatal_Succeeds_WhenAllVarsPresent(t *testing.T) {
+	setAllRequired(t)
+	// If this panics/fatal the test binary will exit — that would be a failure.
 	config.LoadEnvOrFatal()
 }

@@ -75,10 +75,22 @@ func TestMain(m *testing.M) {
 
 	testApp = fiber.New()
 	testApp.Use(middleware.ErrorHandler())
-	api := testApp.Group("/api/v1")
-	auth.Mount(api, testDB, &services.EmailService{})
-	listing.Mount(api, testDB)
-	cart.Mount(api, testDB)
+	emailSvc := &services.EmailService{}
+	authMW := middleware.Auth(testDB)
+	testApp.Post("/api/v1/auth/register", func(c *fiber.Ctx) error { return auth.RegisterUser(testDB, emailSvc, c) })
+	testApp.Post("/api/v1/auth/login", func(c *fiber.Ctx) error { return auth.LoginUser(testDB, c) })
+	testApp.Post("/api/v1/auth/logout", func(c *fiber.Ctx) error { return auth.LogoutUser(testDB, c) })
+	testApp.Get("/api/v1/auth/verify", func(c *fiber.Ctx) error { return auth.VerifyEmail(testDB, c) })
+	testApp.Post("/api/v1/auth/resend-verification", func(c *fiber.Ctx) error { return auth.ResendVerification(testDB, emailSvc, c) })
+	testApp.Get("/api/v1/listings", func(c *fiber.Ctx) error { return listing.GetListings(testDB, c) })
+	testApp.Get("/api/v1/listings/me", authMW, func(c *fiber.Ctx) error { return listing.GetMyListings(testDB, c) })
+	testApp.Get("/api/v1/listings/:id", func(c *fiber.Ctx) error { return listing.GetListing(testDB, c) })
+	testApp.Post("/api/v1/listings", authMW, func(c *fiber.Ctx) error { return listing.CreateListing(testDB, c) })
+	testApp.Patch("/api/v1/listings/:id", authMW, func(c *fiber.Ctx) error { return listing.UpdateListing(testDB, c) })
+	testApp.Delete("/api/v1/listings/:id", authMW, func(c *fiber.Ctx) error { return listing.DeleteListing(testDB, c) })
+	testApp.Get("/api/v1/cart", authMW, func(c *fiber.Ctx) error { return cart.GetCart(testDB, c) })
+	testApp.Post("/api/v1/cart", authMW, func(c *fiber.Ctx) error { return cart.AddToCart(testDB, c) })
+	testApp.Delete("/api/v1/cart/:id", authMW, func(c *fiber.Ctx) error { return cart.RemoveFromCart(testDB, c) })
 
 	os.Exit(m.Run())
 }
