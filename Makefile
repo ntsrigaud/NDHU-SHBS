@@ -10,6 +10,7 @@ GO            ?= go
 GOFMT         ?= gofmt
 PYTHON        ?= python3
 PIP           ?= pip3
+SWAG          ?= $(GO) run github.com/swaggo/swag/cmd/swag@v1.16.6
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Help
@@ -129,7 +130,7 @@ ai-dev:
 .PHONY: generate-api
 
 generate-api:
-	cd $(SERVER_DIR) && swag init -g main.go --output docs
+	cd $(SERVER_DIR) && $(SWAG) init -g main.go --output docs --parseDependency --parseInternal
 	cd $(CLIENT_DIR) && $(NPM) run generate:openapi:json
 	cd $(CLIENT_DIR) && $(NPM) run generate:openapi:yaml
 	cd $(CLIENT_DIR) && $(NPM) run generate:api
