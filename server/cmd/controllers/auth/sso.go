@@ -51,79 +51,89 @@ func ssoCallbackURL() string {
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
 
-// HandleSSOLogin redirects the browser to the NDHU CAS login page.
-// Set NDHU_CAS_BASE_URL (e.g. https://cas.ndhu.edu.tw) in the environment.
-func HandleSSOLogin() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		casBase := strings.TrimRight(os.Getenv("NDHU_CAS_BASE_URL"), "/")
-		if casBase == "" {
-			return fiber.NewError(fiber.StatusServiceUnavailable, "SSO is not configured")
-		}
-		loginURL := fmt.Sprintf("%s/cas/login?service=%s",
-			casBase, url.QueryEscape(ssoCallbackURL()))
-		return c.Redirect(loginURL, fiber.StatusFound)
+// SSOLogin redirects the browser to the NDHU CAS login page.
+//
+// @Summary         SSO Login
+// @Description     Redirects the browser to the NDHU CAS login page
+// @Tags            Auth
+// @Success         302
+// @Failure         503 {object} model.SwaggerErrorResponse
+// @ID              ssoLogin
+// @Router          /auth/sso/login [get]
+func SSOLogin(c *fiber.Ctx) error {
+	casBase := strings.TrimRight(os.Getenv("NDHU_CAS_BASE_URL"), "/")
+	if casBase == "" {
+		return fiber.NewError(fiber.StatusServiceUnavailable, "SSO is not configured")
 	}
+	loginURL := fmt.Sprintf("%s/cas/login?service=%s",
+		casBase, url.QueryEscape(ssoCallbackURL()))
+	return c.Redirect(loginURL, fiber.StatusFound)
 }
 
-// HandleSSOCallback validates the CAS ticket, upserts the user, and issues a JWT.
+// SSOCallback validates the CAS ticket, upserts the user, and issues a JWT.
 //
-// Dev mode: set NDHU_SSO_MOCK=true and present tickets of the form
-// "dev-ticket-<cas_id>" to bypass the real CAS server.
-func HandleSSOCallback(db *sqlx.DB) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		ticket := c.Query("ticket")
-		if ticket == "" {
-			return fiber.NewError(fiber.StatusBadRequest, "missing CAS ticket")
-		}
-
-		var casID, casName, casEmail string
-
-		if os.Getenv("NDHU_SSO_MOCK") == "true" {
-			const prefix = "dev-ticket-"
-			if !strings.HasPrefix(ticket, prefix) {
-				return fiber.NewError(fiber.StatusUnauthorized, "invalid mock ticket")
-			}
-			casID = ticket[len(prefix):]
-			casName = casID
-			casEmail = casID + "@gm.ndhu.edu.tw"
-		} else {
-			var err error
-			casID, casName, casEmail, err = validateCASTicket(ticket)
-			if err != nil {
-				return fiber.NewError(fiber.StatusUnauthorized, "CAS ticket validation failed")
-			}
-		}
-
-		// Fill in defaults when CAS attributes are absent.
-		if casEmail == "" {
-			casEmail = casID + "@gm.ndhu.edu.tw"
-		}
-		if casName == "" {
-			casName = casID
-		}
-
-		user, err := upsertCASUser(db, casID, casName, casEmail)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, "could not sign in via SSO")
-		}
-
-		token, expiresAt, err := util.GenerateJWT(user.ID, user.IsAdmin)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, "could not generate token")
-		}
-
-		c.Cookie(&fiber.Cookie{
-			Name:     "jwt",
-			Value:    token,
-			Expires:  expiresAt,
-			HTTPOnly: true,
-			Secure:   true,
-			SameSite: "Strict",
-		})
-
-		frontendURL := strings.TrimRight(os.Getenv("FRONTEND_BASE_URL"), "/")
-		return c.Redirect(frontendURL+"/", fiber.StatusFound)
+// @Summary         SSO Callback
+// @Description     Validates the CAS ticket and issues a JWT
+// @Tags            Auth
+// @Param           ticket query string true "CAS ticket"
+// @Success         302
+// @Failure         400 {object} model.SwaggerErrorResponse
+// @Failure         401 {object} model.SwaggerErrorResponse
+// @Failure         500 {object} model.SwaggerErrorResponse
+// @ID              ssoCallback
+// @Router          /auth/sso/callback [get]
+func SSOCallback(db *sqlx.DB, c *fiber.Ctx) error {
+	ticket := c.Query("ticket")
+	if ticket == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "missing CAS ticket")
 	}
+
+	var casID, casName, casEmail string
+
+	if os.Getenv("NDHU_SSO_MOCK") == "true" {
+		const prefix = "dev-ticket-"
+		if !strings.HasPrefix(ticket, prefix) {
+			return fiber.NewError(fiber.StatusUnauthorized, "invalid mock ticket")
+		}
+		casID = ticket[len(prefix):]
+		casName = casID
+		casEmail = casID + "@gm.ndhu.edu.tw"
+	} else {
+		var err error
+		casID, casName, casEmail, err = validateCASTicket(ticket)
+		if err != nil {
+			return fiber.NewError(fiber.StatusUnauthorized, "CAS ticket validation failed")
+		}
+	}
+
+	if casEmail == "" {
+		casEmail = casID + "@gm.ndhu.edu.tw"
+	}
+	if casName == "" {
+		casName = casID
+	}
+
+	user, err := upsertCASUser(db, casID, casName, casEmail)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "could not sign in via SSO")
+	}
+
+	token, expiresAt, err := util.GenerateJWT(user.ID, user.IsAdmin)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "could not generate token")
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "jwt",
+		Value:    token,
+		Expires:  expiresAt,
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "Strict",
+	})
+
+	frontendURL := strings.TrimRight(os.Getenv("FRONTEND_BASE_URL"), "/")
+	return c.Redirect(frontendURL+"/", fiber.StatusFound)
 }
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
