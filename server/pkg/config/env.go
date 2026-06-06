@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -22,11 +23,10 @@ var requiredEnv = []string{
 	"AI_SERVICE_URL",
 }
 
-// LoadEnvOrFatal loads the .env file from the working directory (if present)
-// and then verifies that all required variables are set. It calls log.Fatal
-// on any failure, intentionally terminating the process at boot time so that
-// misconfigured deployments are immediately visible.
-func LoadEnvOrFatal() {
+// Load reads the .env file (if present) and validates that all required
+// variables are set. It returns a descriptive error on any failure so callers
+// can decide how to handle it (e.g. log.Fatal in main, return in tests).
+func Load() error {
 	// godotenv.Load is best-effort: a missing file is acceptable in environments
 	// where variables are injected directly (Docker, CI, cloud runtimes).
 	if err := godotenv.Load(); err != nil {
@@ -41,11 +41,21 @@ func LoadEnvOrFatal() {
 	}
 
 	if len(missing) > 0 {
-		log.Fatalf("Missing required environment variables: %s", strings.Join(missing, ", "))
+		return fmt.Errorf("missing required environment variables: %s", strings.Join(missing, ", "))
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if len(jwtSecret) < 32 {
-		log.Fatal("JWT_SECRET must be at least 32 characters long")
+		return fmt.Errorf("JWT_SECRET must be at least 32 characters long")
+	}
+
+	return nil
+}
+
+// LoadEnvOrFatal calls Load and terminates the process on any error.
+// Used by main() where a misconfigured deployment must fail fast.
+func LoadEnvOrFatal() {
+	if err := Load(); err != nil {
+		log.Fatal(err)
 	}
 }
