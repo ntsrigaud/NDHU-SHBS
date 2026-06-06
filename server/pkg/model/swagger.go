@@ -133,7 +133,7 @@ type ListingWithImages struct {
 	Status       string          `db:"status"        json:"status"`
 	Description  *string         `db:"description"   json:"description,omitempty"`
 	AIConfidence *float64        `db:"ai_confidence" json:"ai_confidence,omitempty"`
-	ImageURLs    []string        `db:"image_urls"    json:"image_urls"`
+	ImageURLs    StringSlice     `db:"image_urls"    json:"image_urls" swaggertype:"array,string"`
 	CreatedAt    time.Time       `db:"created_at"    json:"created_at"`
 	UpdatedAt    time.Time       `db:"updated_at"    json:"updated_at"`
 }
