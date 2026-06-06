@@ -74,9 +74,15 @@ func TestMain(m *testing.M) {
 
 	testApp = fiber.New()
 	testApp.Use(middleware.ErrorHandler())
-	api := testApp.Group("/api/v1")
-	auth.Mount(api, testDB, &services.EmailService{})
-	image.Mount(api, testDB)
+	emailSvc := &services.EmailService{}
+	authMW := middleware.Auth(testDB)
+	testApp.Post("/api/v1/auth/register", func(c *fiber.Ctx) error { return auth.RegisterUser(testDB, emailSvc, c) })
+	testApp.Post("/api/v1/auth/login", func(c *fiber.Ctx) error { return auth.LoginUser(testDB, c) })
+	testApp.Post("/api/v1/auth/logout", func(c *fiber.Ctx) error { return auth.LogoutUser(testDB, c) })
+	testApp.Get("/api/v1/auth/verify", func(c *fiber.Ctx) error { return auth.VerifyEmail(testDB, c) })
+	testApp.Post("/api/v1/auth/resend-verification", func(c *fiber.Ctx) error { return auth.ResendVerification(testDB, emailSvc, c) })
+	testApp.Post("/api/v1/images", authMW, func(c *fiber.Ctx) error { return image.RegisterImage(testDB, c) })
+	testApp.Get("/api/v1/images/:id", func(c *fiber.Ctx) error { return image.GetImage(testDB, c) })
 
 	os.Exit(m.Run())
 }
