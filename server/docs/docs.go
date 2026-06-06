@@ -21,6 +21,70 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/ai/condition": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Classifies the condition of a book image using the AI microservice. Accepts the ID of an already-uploaded image.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AI"
+                ],
+                "summary": "Analyze book condition",
+                "operationId": "analyzeCondition",
+                "parameters": [
+                    {
+                        "description": "Image ID to analyze",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerAnalyzeConditionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerAnalyzeConditionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Authenticates a user with email and password, returns a JWT token",
@@ -1874,6 +1938,27 @@ const docTemplate = `{
             "properties": {
                 "listing_id": {
                     "type": "string"
+                }
+            }
+        },
+        "model.SwaggerAnalyzeConditionRequest": {
+            "type": "object",
+            "properties": {
+                "image_id": {
+                    "description": "ImageID is the UUID of an already-uploaded image to classify.",
+                    "type": "string"
+                }
+            }
+        },
+        "model.SwaggerAnalyzeConditionResponse": {
+            "type": "object",
+            "properties": {
+                "condition": {
+                    "description": "Condition is one of: \"good\", \"moderate\", \"poor\".",
+                    "type": "string"
+                },
+                "confidence": {
+                    "type": "number"
                 }
             }
         },
