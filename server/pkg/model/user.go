@@ -22,3 +22,9 @@ type User struct {
 	CreatedAt     time.Time  `db:"created_at"      json:"created_at"`
 	UpdatedAt     time.Time  `db:"updated_at"      json:"updated_at"`
 }
+
+// ErrorResponse is the standard JSON error body returned by all API error responses.
+// Defined here so Swagger annotations can reference it across all controller packages.
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
