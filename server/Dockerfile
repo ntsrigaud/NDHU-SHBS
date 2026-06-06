@@ -32,10 +32,12 @@ WORKDIR /app
 COPY --from=builder /build/main    ./main
 COPY --from=builder /build/migrate ./migrate
 COPY --from=builder /build/migrations ./migrations
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 
 # Drop root before the process starts.
 USER appuser
 
 EXPOSE 8080
 
-ENTRYPOINT ["./main"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
