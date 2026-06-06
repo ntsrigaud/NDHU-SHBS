@@ -1,0 +1,1318 @@
+basePath: /api/v1
+definitions:
+  model.CartItemResponse:
+    properties:
+      added_at:
+        type: string
+      id:
+        type: string
+      listing:
+        $ref: '#/definitions/model.ListingWithImages'
+    type: object
+  model.ConversationResponse:
+    properties:
+      last_message:
+        type: string
+      last_message_at:
+        type: string
+      listing_id:
+        type: string
+      listing_title:
+        type: string
+      other_user_id:
+        type: string
+      other_user_name:
+        type: string
+      unread_count:
+        type: integer
+    type: object
+  model.ImageResponse:
+    properties:
+      cdn_url:
+        type: string
+      id:
+        type: string
+    type: object
+  model.ListingWithImages:
+    properties:
+      ai_confidence:
+        type: number
+      author:
+        type: string
+      condition:
+        type: string
+      course_code:
+        type: string
+      created_at:
+        type: string
+      department:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      image_urls:
+        items:
+          type: string
+        type: array
+      isbn:
+        type: string
+      price:
+        type: number
+      seller_avatar:
+        type: string
+      seller_id:
+        type: string
+      seller_name:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.MessageResponse:
+    properties:
+      body:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      is_read:
+        type: boolean
+      listing_id:
+        type: string
+      receiver_id:
+        type: string
+      sender_id:
+        type: string
+      sender_name:
+        type: string
+    type: object
+  model.NotificationResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      is_read:
+        type: boolean
+      payload:
+        items:
+          type: integer
+        type: array
+      type:
+        type: string
+    type: object
+  model.OrderItemResponse:
+    properties:
+      id:
+        type: string
+      listing:
+        $ref: '#/definitions/model.ListingWithImages'
+      price_at_purchase:
+        type: number
+    type: object
+  model.OrderResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/model.OrderItemResponse'
+        type: array
+      status:
+        type: string
+      total_amount:
+        type: number
+    type: object
+  model.SwaggerAddToCartRequest:
+    properties:
+      listing_id:
+        type: string
+    type: object
+  model.SwaggerCreateListingRequest:
+    properties:
+      author:
+        type: string
+      condition:
+        type: string
+      course_code:
+        type: string
+      department:
+        type: string
+      description:
+        type: string
+      image_ids:
+        items:
+          type: string
+        type: array
+      isbn:
+        type: string
+      price:
+        type: number
+      title:
+        type: string
+    type: object
+  model.SwaggerErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  model.SwaggerLoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  model.SwaggerLoginResponse:
+    properties:
+      expires_at:
+        type: string
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/model.User'
+    type: object
+  model.SwaggerMessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  model.SwaggerRegisterImageRequest:
+    properties:
+      cdn_url:
+        type: string
+      s3_key:
+        type: string
+    type: object
+  model.SwaggerRegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  model.SwaggerResendVerificationRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  model.SwaggerSendMessageRequest:
+    properties:
+      body:
+        type: string
+    type: object
+  model.SwaggerUpdateListingRequest:
+    properties:
+      author:
+        type: string
+      condition:
+        type: string
+      course_code:
+        type: string
+      department:
+        type: string
+      description:
+        type: string
+      image_ids:
+        items:
+          type: string
+        type: array
+      isbn:
+        type: string
+      price:
+        type: number
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+  model.SwaggerUpdateUserRequest:
+    properties:
+      avatar_image_id:
+        type: string
+      name:
+        type: string
+    type: object
+  model.User:
+    properties:
+      avatar_image_id:
+        type: string
+      cas_id:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      email_verified:
+        type: boolean
+      id:
+        type: string
+      is_admin:
+        type: boolean
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+info:
+  contact:
+    name: SHBS Dev Team
+  description: REST API for the NDHU campus second-hand textbook marketplace.
+  license:
+    name: MIT
+  termsOfService: http://swagger.io/terms/
+  title: NDHU Second-Hand Book Store API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user with email and password, returns a JWT token
+      operationId: loginUser
+      parameters:
+      - description: Login credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SwaggerLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SwaggerLoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      summary: Login
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      description: Invalidates the current JWT and clears the session cookie
+      operationId: logoutUser
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SwaggerMessageResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account and sends an email verification link
+      operationId: registerUser
+      parameters:
+      - description: Registration details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SwaggerRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.SwaggerMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      summary: Register
+      tags:
+      - Auth
+  /auth/resend-verification:
+    post:
+      consumes:
+      - application/json
+      description: Sends a new verification email to the specified address if the
+        account is unverified
+      operationId: resendVerification
+      parameters:
+      - description: Email address
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SwaggerResendVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SwaggerMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      summary: Resend verification email
+      tags:
+      - Auth
+  /auth/sso/callback:
+    get:
+      description: Validates the CAS ticket and issues a JWT
+      operationId: ssoCallback
+      parameters:
+      - description: CAS ticket
+        in: query
+        name: ticket
+        required: true
+        type: string
+      responses:
+        "302":
+          description: Found
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      summary: SSO Callback
+      tags:
+      - Auth
+  /auth/sso/login:
+    get:
+      description: Redirects the browser to the NDHU CAS login page
+      operationId: ssoLogin
+      responses:
+        "302":
+          description: Found
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      summary: SSO Login
+      tags:
+      - Auth
+  /auth/verify:
+    get:
+      description: Verifies a user's email address using the token from the verification
+        email
+      operationId: verifyEmail
+      parameters:
+      - description: Verification token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SwaggerMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      summary: Verify email
+      tags:
+      - Auth
+  /cart:
+    get:
+      description: Returns the authenticated user's cart items
+      operationId: getCart
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.CartItemResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List cart
+      tags:
+      - Cart
+    post:
+      consumes:
+      - application/json
+      description: Adds a listing to the authenticated user's cart
+      operationId: addToCart
+      parameters:
+      - description: Listing to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SwaggerAddToCartRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.SwaggerMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add to cart
+      tags:
+      - Cart
+  /cart/{id}:
+    delete:
+      description: Removes a cart item from the authenticated user's cart
+      operationId: removeFromCart
+      parameters:
+      - description: Cart item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SwaggerMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove from cart
+      tags:
+      - Cart
+  /images:
+    post:
+      consumes:
+      - application/json
+      description: Registers an image metadata record in the database after upload
+        to S3
+      operationId: registerImage
+      parameters:
+      - description: Image metadata
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SwaggerRegisterImageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.ImageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Register image
+      tags:
+      - Images
+  /images/{id}:
+    get:
+      description: Returns image metadata by ID
+      operationId: getImage
+      parameters:
+      - description: Image ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ImageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      summary: Get image
+      tags:
+      - Images
+  /listings:
+    get:
+      description: Paginated, filterable list of book listings. Returns the full page
+        in the JSON body and total count in X-Total-Count header.
+      operationId: getListings
+      parameters:
+      - description: 'Filter by status (default: active)'
+        in: query
+        name: status
+        type: string
+      - description: Filter by department
+        in: query
+        name: department
+        type: string
+      - description: Filter by condition (good|moderate|poor)
+        in: query
+        name: condition
+        type: string
+      - description: Full-text search on title, author, or ISBN
+        in: query
+        name: search
+        type: string
+      - description: Minimum price
+        in: query
+        name: price_min
+        type: number
+      - description: Maximum price
+        in: query
+        name: price_max
+        type: number
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 20, max: 100)'
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ListingWithImages'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      summary: List listings
+      tags:
+      - Listings
+    post:
+      consumes:
+      - application/json
+      description: Publishes a new book listing for the authenticated seller.
+      operationId: createListing
+      parameters:
+      - description: Listing details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SwaggerCreateListingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.ListingWithImages'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create listing
+      tags:
+      - Listings
+  /listings/{id}:
+    delete:
+      description: Soft-deletes a listing by setting its status to 'delisted'. Only
+        the seller or an admin may delete.
+      operationId: deleteListing
+      parameters:
+      - description: Listing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete listing
+      tags:
+      - Listings
+    get:
+      description: Returns a single listing with seller info and image URLs.
+      operationId: getListing
+      parameters:
+      - description: Listing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ListingWithImages'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      summary: Get listing by ID
+      tags:
+      - Listings
+    patch:
+      consumes:
+      - application/json
+      description: Partially updates a listing. Only the seller may update their own
+        listing.
+      operationId: updateListing
+      parameters:
+      - description: Listing ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SwaggerUpdateListingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.ListingWithImages'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update listing
+      tags:
+      - Listings
+  /listings/{listingId}/messages:
+    get:
+      description: Returns the conversation between the authenticated user and the
+        other party for a given listing. Marks received messages as read.
+      operationId: getMessages
+      parameters:
+      - description: Listing ID
+        in: path
+        name: listingId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.MessageResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List messages for a listing
+      tags:
+      - Messages
+    post:
+      consumes:
+      - application/json
+      description: Sends a message from the authenticated user to the listing seller.
+        Creates a notification for the receiver.
+      operationId: sendMessage
+      parameters:
+      - description: Listing ID
+        in: path
+        name: listingId
+        required: true
+        type: string
+      - description: Message body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SwaggerSendMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Send a message about a listing
+      tags:
+      - Messages
+  /listings/me:
+    get:
+      description: Returns all listings created by the authenticated user, newest
+        first.
+      operationId: getMyListings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ListingWithImages'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: My listings
+      tags:
+      - Listings
+  /messages/{id}/read:
+    patch:
+      description: Marks a single message as read. Only the receiver may mark a message
+        as read.
+      operationId: markMessageAsRead
+      parameters:
+      - description: Message ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mark message as read
+      tags:
+      - Messages
+  /messages/conversations:
+    get:
+      description: Returns one summary entry per unique (listing, other_user) conversation
+        pair the authenticated user is part of.
+      operationId: getConversations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.ConversationResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List conversation threads
+      tags:
+      - Messages
+  /messages/unread-count:
+    get:
+      description: Returns the number of unread messages for the authenticated user.
+      operationId: getUnreadMessageCount
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unread message count
+      tags:
+      - Messages
+  /notifications:
+    get:
+      description: Returns all notifications for the authenticated user, newest first.
+      operationId: getNotifications
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.NotificationResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List notifications
+      tags:
+      - Notifications
+  /notifications/{id}/read:
+    patch:
+      description: Marks a single notification as read. Returns 404 if the notification
+        does not belong to the current user.
+      operationId: markNotificationAsRead
+      parameters:
+      - description: Notification ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mark notification as read
+      tags:
+      - Notifications
+  /notifications/read-all:
+    patch:
+      description: Marks every unread notification for the authenticated user as read.
+      operationId: markAllNotificationsAsRead
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mark all notifications as read
+      tags:
+      - Notifications
+  /notifications/unread-count:
+    get:
+      description: Returns the number of unread notifications for the authenticated
+        user.
+      operationId: getUnreadNotificationCount
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unread notification count
+      tags:
+      - Notifications
+  /orders:
+    get:
+      description: Returns all orders for the authenticated user, newest first
+      operationId: getOrders
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.OrderResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List orders
+      tags:
+      - Orders
+    post:
+      description: Creates an order from the authenticated user's cart, marks listings
+        as sold, and clears the cart
+      operationId: checkout
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.SwaggerMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Checkout
+      tags:
+      - Orders
+  /users/me:
+    get:
+      description: Returns the authenticated user's profile information
+      operationId: getMe
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Updates the authenticated user's name and/or avatar image
+      operationId: updateMe
+      parameters:
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SwaggerUpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.SwaggerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update current user
+      tags:
+      - Users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

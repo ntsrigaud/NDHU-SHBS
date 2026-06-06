@@ -1,1 +1,12 @@
+.git
+.gitignore
+.env
+.env.*
+*.md
+*_test.go
+Dockerfile
+docker-compose.yml
 docs/
+vendor/
+bin/
+tmp/

@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: shbs
+      POSTGRES_USER: shbs_user
+      POSTGRES_PASSWORD: shbs_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://shbs_user:shbs_password@db:5432/shbs?sslmode=disable
+      PORT: 8080
+      JWT_SECRET: your_very_long_secret_at_least_32_chars
+      JWT_EXPIRY_HOURS: 24
+      FRONTEND_BASE_URL: http://localhost:3000
+      API_BASE_URL: http://localhost:8080
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
