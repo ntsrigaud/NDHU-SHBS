@@ -14,7 +14,7 @@ type User struct {
 	ID            uuid.UUID  `db:"id"              json:"id"`
 	Name          string     `db:"name"            json:"name"`
 	Email         string     `db:"email"           json:"email"`
-	PasswordHash  *string    `db:"password_hash"   json:"-"`                      // NEVER serialise to JSON
+	PasswordHash  *string    `db:"password_hash"   json:"-"` // NEVER serialise to JSON
 	IsAdmin       bool       `db:"is_admin"        json:"is_admin"`
 	AvatarImageID *uuid.UUID `db:"avatar_image_id" json:"avatar_image_id,omitempty"`
 	EmailVerified bool       `db:"email_verified"  json:"email_verified"`

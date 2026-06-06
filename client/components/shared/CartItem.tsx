@@ -28,7 +28,10 @@ export default function CartItem({ item }: { item: CartItemType }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <Link href={`/books/${item.listingId}`} className="line-clamp-2 font-medium hover:underline">
+        <Link
+          href={`/books/${item.listingId}`}
+          className="line-clamp-2 font-medium hover:underline"
+        >
           {item.title}
         </Link>
         <p className="text-sm text-muted-foreground">{item.sellerName}</p>

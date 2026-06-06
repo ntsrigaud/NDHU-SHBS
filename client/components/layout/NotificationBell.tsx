@@ -92,7 +92,7 @@ export default function NotificationBell() {
                 onClick={() => !n.is_read && markRead(n.id)}
                 className={cn(
                   'flex flex-col items-start gap-0.5 px-3 py-2',
-                  !n.is_read && 'bg-primary/5',
+                  !n.is_read && 'bg-primary/5'
                 )}
               >
                 <span className="text-sm">{notificationText(n.type, n.payload)}</span>

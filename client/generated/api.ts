@@ -184,9 +184,9 @@ export interface ModelUser {
 }
 
 export type QueryParamsType = Record<string | number, any>;
-export type ResponseFormat = keyof Omit<Body, "body" | "bodyUsed">;
+export type ResponseFormat = keyof Omit<Body, 'body' | 'bodyUsed'>;
 
-export interface FullRequestParams extends Omit<RequestInit, "body"> {
+export interface FullRequestParams extends Omit<RequestInit, 'body'> {
   /** set parameter to `true` for call `securityWorker` for this request */
   secure?: boolean;
   /** request path */
@@ -205,22 +205,18 @@ export interface FullRequestParams extends Omit<RequestInit, "body"> {
   cancelToken?: CancelToken;
 }
 
-export type RequestParams = Omit<
-  FullRequestParams,
-  "body" | "method" | "query" | "path"
->;
+export type RequestParams = Omit<FullRequestParams, 'body' | 'method' | 'query' | 'path'>;
 
 export interface ApiConfig<SecurityDataType = unknown> {
   baseUrl?: string;
-  baseApiParams?: Omit<RequestParams, "baseUrl" | "cancelToken" | "signal">;
+  baseApiParams?: Omit<RequestParams, 'baseUrl' | 'cancelToken' | 'signal'>;
   securityWorker?: (
-    securityData: SecurityDataType | null,
+    securityData: SecurityDataType | null
   ) => Promise<RequestParams | void> | RequestParams | void;
   customFetch?: typeof fetch;
 }
 
-export interface HttpResponse<D extends unknown, E extends unknown = unknown>
-  extends Response {
+export interface HttpResponse<D extends unknown, E extends unknown = unknown> extends Response {
   data: D;
   error: E;
 }
@@ -228,26 +224,25 @@ export interface HttpResponse<D extends unknown, E extends unknown = unknown>
 type CancelToken = Symbol | string | number;
 
 export enum ContentType {
-  Json = "application/json",
-  JsonApi = "application/vnd.api+json",
-  FormData = "multipart/form-data",
-  UrlEncoded = "application/x-www-form-urlencoded",
-  Text = "text/plain",
+  Json = 'application/json',
+  JsonApi = 'application/vnd.api+json',
+  FormData = 'multipart/form-data',
+  UrlEncoded = 'application/x-www-form-urlencoded',
+  Text = 'text/plain',
 }
 
 export class HttpClient<SecurityDataType = unknown> {
-  public baseUrl: string = "/api/v1";
+  public baseUrl: string = '/api/v1';
   private securityData: SecurityDataType | null = null;
-  private securityWorker?: ApiConfig<SecurityDataType>["securityWorker"];
+  private securityWorker?: ApiConfig<SecurityDataType>['securityWorker'];
   private abortControllers = new Map<CancelToken, AbortController>();
-  private customFetch = (...fetchParams: Parameters<typeof fetch>) =>
-    fetch(...fetchParams);
+  private customFetch = (...fetchParams: Parameters<typeof fetch>) => fetch(...fetchParams);
 
   private baseApiParams: RequestParams = {
-    credentials: "same-origin",
+    credentials: 'same-origin',
     headers: {},
-    redirect: "follow",
-    referrerPolicy: "no-referrer",
+    redirect: 'follow',
+    referrerPolicy: 'no-referrer',
   };
 
   constructor(apiConfig: ApiConfig<SecurityDataType> = {}) {
@@ -260,7 +255,7 @@ export class HttpClient<SecurityDataType = unknown> {
 
   protected encodeQueryParam(key: string, value: any) {
     const encodedKey = encodeURIComponent(key);
-    return `${encodedKey}=${encodeURIComponent(typeof value === "number" ? value : `${value}`)}`;
+    return `${encodedKey}=${encodeURIComponent(typeof value === 'number' ? value : `${value}`)}`;
   }
 
   protected addQueryParam(query: QueryParamsType, key: string) {
@@ -269,41 +264,37 @@ export class HttpClient<SecurityDataType = unknown> {
 
   protected addArrayQueryParam(query: QueryParamsType, key: string) {
     const value = query[key];
-    return value.map((v: any) => this.encodeQueryParam(key, v)).join("&");
+    return value.map((v: any) => this.encodeQueryParam(key, v)).join('&');
   }
 
   protected toQueryString(rawQuery?: QueryParamsType): string {
     const query = rawQuery || {};
-    const keys = Object.keys(query).filter(
-      (key) => "undefined" !== typeof query[key],
-    );
+    const keys = Object.keys(query).filter((key) => 'undefined' !== typeof query[key]);
     return keys
       .map((key) =>
         Array.isArray(query[key])
           ? this.addArrayQueryParam(query, key)
-          : this.addQueryParam(query, key),
+          : this.addQueryParam(query, key)
       )
-      .join("&");
+      .join('&');
   }
 
   protected addQueryParams(rawQuery?: QueryParamsType): string {
     const queryString = this.toQueryString(rawQuery);
-    return queryString ? `?${queryString}` : "";
+    return queryString ? `?${queryString}` : '';
   }
 
   private contentFormatters: Record<ContentType, (input: any) => any> = {
     [ContentType.Json]: (input: any) =>
-      input !== null && (typeof input === "object" || typeof input === "string")
+      input !== null && (typeof input === 'object' || typeof input === 'string')
         ? JSON.stringify(input)
         : input,
     [ContentType.JsonApi]: (input: any) =>
-      input !== null && (typeof input === "object" || typeof input === "string")
+      input !== null && (typeof input === 'object' || typeof input === 'string')
         ? JSON.stringify(input)
         : input,
     [ContentType.Text]: (input: any) =>
-      input !== null && typeof input !== "string"
-        ? JSON.stringify(input)
-        : input,
+      input !== null && typeof input !== 'string' ? JSON.stringify(input) : input,
     [ContentType.FormData]: (input: any) => {
       if (input instanceof FormData) {
         return input;
@@ -315,9 +306,9 @@ export class HttpClient<SecurityDataType = unknown> {
           key,
           property instanceof Blob
             ? property
-            : typeof property === "object" && property !== null
+            : typeof property === 'object' && property !== null
               ? JSON.stringify(property)
-              : `${property}`,
+              : `${property}`
         );
         return formData;
       }, new FormData());
@@ -325,10 +316,7 @@ export class HttpClient<SecurityDataType = unknown> {
     [ContentType.UrlEncoded]: (input: any) => this.toQueryString(input),
   };
 
-  protected mergeRequestParams(
-    params1: RequestParams,
-    params2?: RequestParams,
-  ): RequestParams {
+  protected mergeRequestParams(params1: RequestParams, params2?: RequestParams): RequestParams {
     return {
       ...this.baseApiParams,
       ...params1,
@@ -341,9 +329,7 @@ export class HttpClient<SecurityDataType = unknown> {
     };
   }
 
-  protected createAbortSignal = (
-    cancelToken: CancelToken,
-  ): AbortSignal | undefined => {
+  protected createAbortSignal = (cancelToken: CancelToken): AbortSignal | undefined => {
     if (this.abortControllers.has(cancelToken)) {
       const abortController = this.abortControllers.get(cancelToken);
       if (abortController) {
@@ -378,7 +364,7 @@ export class HttpClient<SecurityDataType = unknown> {
     ...params
   }: FullRequestParams): Promise<HttpResponse<T, E>> => {
     const secureParams =
-      ((typeof secure === "boolean" ? secure : this.baseApiParams.secure) &&
+      ((typeof secure === 'boolean' ? secure : this.baseApiParams.secure) &&
         this.securityWorker &&
         (await this.securityWorker(this.securityData))) ||
       {};
@@ -388,24 +374,16 @@ export class HttpClient<SecurityDataType = unknown> {
     const responseFormat = format || requestParams.format;
 
     return this.customFetch(
-      `${baseUrl || this.baseUrl || ""}${path}${queryString ? `?${queryString}` : ""}`,
+      `${baseUrl || this.baseUrl || ''}${path}${queryString ? `?${queryString}` : ''}`,
       {
         ...requestParams,
         headers: {
           ...(requestParams.headers || {}),
-          ...(type && type !== ContentType.FormData
-            ? { "Content-Type": type }
-            : {}),
+          ...(type && type !== ContentType.FormData ? { 'Content-Type': type } : {}),
         },
-        signal:
-          (cancelToken
-            ? this.createAbortSignal(cancelToken)
-            : requestParams.signal) || null,
-        body:
-          typeof body === "undefined" || body === null
-            ? null
-            : payloadFormatter(body),
-      },
+        signal: (cancelToken ? this.createAbortSignal(cancelToken) : requestParams.signal) || null,
+        body: typeof body === 'undefined' || body === null ? null : payloadFormatter(body),
+      }
     ).then(async (response) => {
       const r = response as HttpResponse<T, E>;
       r.data = null as unknown as T;
@@ -448,9 +426,7 @@ export class HttpClient<SecurityDataType = unknown> {
  *
  * REST API for the NDHU campus second-hand textbook marketplace.
  */
-export class Api<
-  SecurityDataType extends unknown,
-> extends HttpClient<SecurityDataType> {
+export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
   ai = {
     /**
      * @description Classifies the condition of a book image using the AI microservice. Accepts the ID of an already-uploaded image.
@@ -461,20 +437,14 @@ export class Api<
      * @request POST:/ai/condition
      * @secure
      */
-    analyzeCondition: (
-      data: ModelSwaggerAnalyzeConditionRequest,
-      params: RequestParams = {},
-    ) =>
-      this.request<
-        ModelSwaggerAnalyzeConditionResponse,
-        ModelSwaggerErrorResponse
-      >({
+    analyzeCondition: (data: ModelSwaggerAnalyzeConditionRequest, params: RequestParams = {}) =>
+      this.request<ModelSwaggerAnalyzeConditionResponse, ModelSwaggerErrorResponse>({
         path: `/ai/condition`,
-        method: "POST",
+        method: 'POST',
         body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
+        format: 'json',
         ...params,
       }),
   };
@@ -490,10 +460,10 @@ export class Api<
     loginUser: (data: ModelSwaggerLoginRequest, params: RequestParams = {}) =>
       this.request<ModelSwaggerLoginResponse, ModelSwaggerErrorResponse>({
         path: `/auth/login`,
-        method: "POST",
+        method: 'POST',
         body: data,
         type: ContentType.Json,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -509,9 +479,9 @@ export class Api<
     logoutUser: (params: RequestParams = {}) =>
       this.request<ModelSwaggerMessageResponse, ModelSwaggerErrorResponse>({
         path: `/auth/logout`,
-        method: "POST",
+        method: 'POST',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -523,16 +493,13 @@ export class Api<
      * @summary Register
      * @request POST:/auth/register
      */
-    registerUser: (
-      data: ModelSwaggerRegisterRequest,
-      params: RequestParams = {},
-    ) =>
+    registerUser: (data: ModelSwaggerRegisterRequest, params: RequestParams = {}) =>
       this.request<ModelSwaggerMessageResponse, ModelSwaggerErrorResponse>({
         path: `/auth/register`,
-        method: "POST",
+        method: 'POST',
         body: data,
         type: ContentType.Json,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -544,16 +511,13 @@ export class Api<
      * @summary Resend verification email
      * @request POST:/auth/resend-verification
      */
-    resendVerification: (
-      data: ModelSwaggerResendVerificationRequest,
-      params: RequestParams = {},
-    ) =>
+    resendVerification: (data: ModelSwaggerResendVerificationRequest, params: RequestParams = {}) =>
       this.request<ModelSwaggerMessageResponse, ModelSwaggerErrorResponse>({
         path: `/auth/resend-verification`,
-        method: "POST",
+        method: 'POST',
         body: data,
         type: ContentType.Json,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -570,11 +534,11 @@ export class Api<
         /** CAS ticket */
         ticket: string;
       },
-      params: RequestParams = {},
+      params: RequestParams = {}
     ) =>
       this.request<any, void | ModelSwaggerErrorResponse>({
         path: `/auth/sso/callback`,
-        method: "GET",
+        method: 'GET',
         query: query,
         ...params,
       }),
@@ -590,7 +554,7 @@ export class Api<
     ssoLogin: (params: RequestParams = {}) =>
       this.request<any, void | ModelSwaggerErrorResponse>({
         path: `/auth/sso/login`,
-        method: "GET",
+        method: 'GET',
         ...params,
       }),
 
@@ -607,13 +571,13 @@ export class Api<
         /** Verification token */
         token: string;
       },
-      params: RequestParams = {},
+      params: RequestParams = {}
     ) =>
       this.request<ModelSwaggerMessageResponse, ModelSwaggerErrorResponse>({
         path: `/auth/verify`,
-        method: "GET",
+        method: 'GET',
         query: query,
-        format: "json",
+        format: 'json',
         ...params,
       }),
   };
@@ -630,9 +594,9 @@ export class Api<
     getCart: (params: RequestParams = {}) =>
       this.request<ModelCartItemResponse[], ModelSwaggerErrorResponse>({
         path: `/cart`,
-        method: "GET",
+        method: 'GET',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -645,17 +609,14 @@ export class Api<
      * @request POST:/cart
      * @secure
      */
-    addToCart: (
-      data: ModelSwaggerAddToCartRequest,
-      params: RequestParams = {},
-    ) =>
+    addToCart: (data: ModelSwaggerAddToCartRequest, params: RequestParams = {}) =>
       this.request<ModelSwaggerMessageResponse, ModelSwaggerErrorResponse>({
         path: `/cart`,
-        method: "POST",
+        method: 'POST',
         body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -671,9 +632,9 @@ export class Api<
     removeFromCart: (id: string, params: RequestParams = {}) =>
       this.request<ModelSwaggerMessageResponse, ModelSwaggerErrorResponse>({
         path: `/cart/${id}`,
-        method: "DELETE",
+        method: 'DELETE',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
   };
@@ -687,17 +648,14 @@ export class Api<
      * @request POST:/images
      * @secure
      */
-    registerImage: (
-      data: ModelSwaggerRegisterImageRequest,
-      params: RequestParams = {},
-    ) =>
+    registerImage: (data: ModelSwaggerRegisterImageRequest, params: RequestParams = {}) =>
       this.request<ModelImageResponse, ModelSwaggerErrorResponse>({
         path: `/images`,
-        method: "POST",
+        method: 'POST',
         body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -718,15 +676,15 @@ export class Api<
          */
         file: File;
       },
-      params: RequestParams = {},
+      params: RequestParams = {}
     ) =>
       this.request<ModelSwaggerUploadImageResponse, ModelSwaggerErrorResponse>({
         path: `/images/upload`,
-        method: "POST",
+        method: 'POST',
         body: data,
         secure: true,
         type: ContentType.FormData,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -741,8 +699,8 @@ export class Api<
     getImage: (id: string, params: RequestParams = {}) =>
       this.request<ModelImageResponse, ModelSwaggerErrorResponse>({
         path: `/images/${id}`,
-        method: "GET",
-        format: "json",
+        method: 'GET',
+        format: 'json',
         ...params,
       }),
   };
@@ -774,13 +732,13 @@ export class Api<
         /** Items per page (default: 20, max: 100) */
         limit?: number;
       },
-      params: RequestParams = {},
+      params: RequestParams = {}
     ) =>
       this.request<ModelListingWithImages[], ModelSwaggerErrorResponse>({
         path: `/listings`,
-        method: "GET",
+        method: 'GET',
         query: query,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -793,17 +751,14 @@ export class Api<
      * @request POST:/listings
      * @secure
      */
-    createListing: (
-      data: ModelSwaggerCreateListingRequest,
-      params: RequestParams = {},
-    ) =>
+    createListing: (data: ModelSwaggerCreateListingRequest, params: RequestParams = {}) =>
       this.request<ModelListingWithImages, ModelSwaggerErrorResponse>({
         path: `/listings`,
-        method: "POST",
+        method: 'POST',
         body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -819,9 +774,9 @@ export class Api<
     getMyListings: (params: RequestParams = {}) =>
       this.request<ModelListingWithImages[], ModelSwaggerErrorResponse>({
         path: `/listings/me`,
-        method: "GET",
+        method: 'GET',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -836,8 +791,8 @@ export class Api<
     getListing: (id: string, params: RequestParams = {}) =>
       this.request<ModelListingWithImages, ModelSwaggerErrorResponse>({
         path: `/listings/${id}`,
-        method: "GET",
-        format: "json",
+        method: 'GET',
+        format: 'json',
         ...params,
       }),
 
@@ -853,7 +808,7 @@ export class Api<
     deleteListing: (id: string, params: RequestParams = {}) =>
       this.request<void, ModelSwaggerErrorResponse>({
         path: `/listings/${id}`,
-        method: "DELETE",
+        method: 'DELETE',
         secure: true,
         ...params,
       }),
@@ -870,15 +825,15 @@ export class Api<
     updateListing: (
       id: string,
       data: ModelSwaggerUpdateListingRequest,
-      params: RequestParams = {},
+      params: RequestParams = {}
     ) =>
       this.request<ModelListingWithImages, ModelSwaggerErrorResponse>({
         path: `/listings/${id}`,
-        method: "PATCH",
+        method: 'PATCH',
         body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -894,9 +849,9 @@ export class Api<
     getMessages: (listingId: string, params: RequestParams = {}) =>
       this.request<ModelMessageResponse[], ModelSwaggerErrorResponse>({
         path: `/listings/${listingId}/messages`,
-        method: "GET",
+        method: 'GET',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -912,15 +867,15 @@ export class Api<
     sendMessage: (
       listingId: string,
       data: ModelSwaggerSendMessageRequest,
-      params: RequestParams = {},
+      params: RequestParams = {}
     ) =>
       this.request<ModelMessageResponse, ModelSwaggerErrorResponse>({
         path: `/listings/${listingId}/messages`,
-        method: "POST",
+        method: 'POST',
         body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
+        format: 'json',
         ...params,
       }),
   };
@@ -937,9 +892,9 @@ export class Api<
     getConversations: (params: RequestParams = {}) =>
       this.request<ModelConversationResponse[], ModelSwaggerErrorResponse>({
         path: `/messages/conversations`,
-        method: "GET",
+        method: 'GET',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -955,9 +910,9 @@ export class Api<
     getUnreadMessageCount: (params: RequestParams = {}) =>
       this.request<Record<string, number>, ModelSwaggerErrorResponse>({
         path: `/messages/unread-count`,
-        method: "GET",
+        method: 'GET',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -973,7 +928,7 @@ export class Api<
     markMessageAsRead: (id: string, params: RequestParams = {}) =>
       this.request<void, ModelSwaggerErrorResponse>({
         path: `/messages/${id}/read`,
-        method: "PATCH",
+        method: 'PATCH',
         secure: true,
         ...params,
       }),
@@ -991,9 +946,9 @@ export class Api<
     getNotifications: (params: RequestParams = {}) =>
       this.request<ModelNotificationResponse[], ModelSwaggerErrorResponse>({
         path: `/notifications`,
-        method: "GET",
+        method: 'GET',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -1009,7 +964,7 @@ export class Api<
     markAllNotificationsAsRead: (params: RequestParams = {}) =>
       this.request<void, ModelSwaggerErrorResponse>({
         path: `/notifications/read-all`,
-        method: "PATCH",
+        method: 'PATCH',
         secure: true,
         ...params,
       }),
@@ -1026,9 +981,9 @@ export class Api<
     getUnreadNotificationCount: (params: RequestParams = {}) =>
       this.request<Record<string, number>, ModelSwaggerErrorResponse>({
         path: `/notifications/unread-count`,
-        method: "GET",
+        method: 'GET',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -1044,7 +999,7 @@ export class Api<
     markNotificationAsRead: (id: string, params: RequestParams = {}) =>
       this.request<void, ModelSwaggerErrorResponse>({
         path: `/notifications/${id}/read`,
-        method: "PATCH",
+        method: 'PATCH',
         secure: true,
         ...params,
       }),
@@ -1062,9 +1017,9 @@ export class Api<
     getOrders: (params: RequestParams = {}) =>
       this.request<ModelOrderResponse[], ModelSwaggerErrorResponse>({
         path: `/orders`,
-        method: "GET",
+        method: 'GET',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -1080,9 +1035,9 @@ export class Api<
     checkout: (params: RequestParams = {}) =>
       this.request<ModelSwaggerMessageResponse, ModelSwaggerErrorResponse>({
         path: `/orders`,
-        method: "POST",
+        method: 'POST',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
   };
@@ -1099,9 +1054,9 @@ export class Api<
     getMe: (params: RequestParams = {}) =>
       this.request<ModelUser, ModelSwaggerErrorResponse>({
         path: `/users/me`,
-        method: "GET",
+        method: 'GET',
         secure: true,
-        format: "json",
+        format: 'json',
         ...params,
       }),
 
@@ -1114,17 +1069,14 @@ export class Api<
      * @request PUT:/users/me
      * @secure
      */
-    updateMe: (
-      data: ModelSwaggerUpdateUserRequest,
-      params: RequestParams = {},
-    ) =>
+    updateMe: (data: ModelSwaggerUpdateUserRequest, params: RequestParams = {}) =>
       this.request<ModelUser, ModelSwaggerErrorResponse>({
         path: `/users/me`,
-        method: "PUT",
+        method: 'PUT',
         body: data,
         secure: true,
         type: ContentType.Json,
-        format: "json",
+        format: 'json',
         ...params,
       }),
   };

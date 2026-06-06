@@ -377,15 +377,16 @@ export const listingsApi = {
     const listings = await executeApiRequest((apiClient) => apiClient.listings.getMyListings());
     return listings.map(toBookListing);
   },
-  async createListing(data: Parameters<ApiClient['listings']['createListing']>[0]): Promise<BookListing> {
+  async createListing(
+    data: Parameters<ApiClient['listings']['createListing']>[0]
+  ): Promise<BookListing> {
     const listing = await executeApiRequest((apiClient) => apiClient.listings.createListing(data));
     return toBookListing(listing);
   },
-  async updateListing(
-    id: string,
-    data: UpdateListingInput
-  ): Promise<BookListing> {
-    const listing = await executeApiRequest((apiClient) => apiClient.listings.updateListing(id, data));
+  async updateListing(id: string, data: UpdateListingInput): Promise<BookListing> {
+    const listing = await executeApiRequest((apiClient) =>
+      apiClient.listings.updateListing(id, data)
+    );
     return toBookListing(listing);
   },
   deleteListing(id: string): Promise<void> {
@@ -408,7 +409,9 @@ export const cartApi = {
 
 export const messagesApi = {
   async getMessages(listingId: string): Promise<Message[]> {
-    const messages = await executeApiRequest((apiClient) => apiClient.listings.getMessages(listingId));
+    const messages = await executeApiRequest((apiClient) =>
+      apiClient.listings.getMessages(listingId)
+    );
     return messages.map(toMessage);
   },
   async sendMessage(listingId: string, body: string): Promise<Message> {
@@ -421,18 +424,24 @@ export const messagesApi = {
     return executeApiRequest((apiClient) => apiClient.messages.markMessageAsRead(messageId));
   },
   async getUnreadCount(): Promise<number> {
-    const response = await executeApiRequest((apiClient) => apiClient.messages.getUnreadMessageCount());
+    const response = await executeApiRequest((apiClient) =>
+      apiClient.messages.getUnreadMessageCount()
+    );
     return getCountValue(response);
   },
   async getConversations(): Promise<Conversation[]> {
-    const conversations = await executeApiRequest((apiClient) => apiClient.messages.getConversations());
+    const conversations = await executeApiRequest((apiClient) =>
+      apiClient.messages.getConversations()
+    );
     return conversations.map(toConversation);
   },
 };
 
 export const notificationsApi = {
   async getNotifications(): Promise<Notification[]> {
-    const notifications = await executeApiRequest((apiClient) => apiClient.notifications.getNotifications());
+    const notifications = await executeApiRequest((apiClient) =>
+      apiClient.notifications.getNotifications()
+    );
     return notifications.map(toNotification);
   },
   async getUnreadCount(): Promise<number> {

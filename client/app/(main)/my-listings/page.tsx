@@ -17,7 +17,10 @@ const STATUS_LABELS: Record<BookListing['status'], string> = {
   delisted: 'Delisted',
 };
 
-const STATUS_VARIANTS: Record<BookListing['status'], 'default' | 'secondary' | 'destructive' | 'outline'> = {
+const STATUS_VARIANTS: Record<
+  BookListing['status'],
+  'default' | 'secondary' | 'destructive' | 'outline'
+> = {
   active: 'default',
   reserved: 'secondary',
   sold: 'outline',
@@ -56,9 +59,7 @@ export default function MyListingsPage() {
         </div>
       )}
 
-      {isError && (
-        <p className="text-muted-foreground">Failed to load your listings.</p>
-      )}
+      {isError && <p className="text-muted-foreground">Failed to load your listings.</p>}
 
       {listings && listings.length === 0 && (
         <div className="py-20 text-center">

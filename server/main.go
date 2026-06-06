@@ -28,16 +28,16 @@ import (
 	_ "github.com/lib/pq"
 )
 
-//	@title			NDHU Second-Hand Book Store API
-//	@version		1.0
-//	@description	REST API for the NDHU campus second-hand textbook marketplace.
-//	@termsOfService	http://swagger.io/terms/
-//	@contact.name	SHBS Dev Team
-//	@license.name	MIT
-//	@BasePath		/api/v1
-//	@securityDefinitions.apikey BearerAuth
-//	@in				header
-//	@name			Authorization
+// @title			NDHU Second-Hand Book Store API
+// @version		1.0
+// @description	REST API for the NDHU campus second-hand textbook marketplace.
+// @termsOfService	http://swagger.io/terms/
+// @contact.name	SHBS Dev Team
+// @license.name	MIT
+// @BasePath		/api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in				header
+// @name			Authorization
 func main() {
 	config.LoadEnvOrFatal()
 
