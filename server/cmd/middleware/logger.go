@@ -14,11 +14,19 @@ func Logger() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
 		err := c.Next()
+		statusCode := c.Response().StatusCode()
+		if err != nil {
+			if fiberErr, ok := err.(*fiber.Error); ok {
+				statusCode = fiberErr.Code
+			} else if statusCode < fiber.StatusBadRequest {
+				statusCode = fiber.StatusInternalServerError
+			}
+		}
 		log.Printf("[%s] %s %s → %d (%s)",
 			c.IP(),
 			c.Method(),
 			c.OriginalURL(),
-			c.Response().StatusCode(),
+			statusCode,
 			time.Since(start),
 		)
 		return err
