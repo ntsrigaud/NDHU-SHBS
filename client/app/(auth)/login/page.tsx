@@ -59,80 +59,80 @@ export default function LoginPage() {
       <Suspense>
         <RegistrationToast />
       </Suspense>
-    <Card className="w-full max-w-sm">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
-        <CardDescription>Sign in to your NDHU Books account</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="you@example.com"
-                      autoComplete="email"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardDescription>Sign in to your NDHU Books account</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        autoComplete="email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        autoComplete="current-password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {error && (
+                <p className="text-sm text-destructive">{error.message ?? 'Login failed'}</p>
               )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      autoComplete="current-password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
-            {error && (
-              <p className="text-sm text-destructive">{error.message ?? 'Login failed'}</p>
-            )}
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? 'Signing in…' : 'Sign in'}
+              </Button>
+            </form>
+          </Form>
 
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? 'Signing in…' : 'Sign in'}
-            </Button>
-          </form>
-        </Form>
+          <div className="relative">
+            <Separator />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+              or
+            </span>
+          </div>
 
-        <div className="relative">
-          <Separator />
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-            or
-          </span>
-        </div>
+          <Button variant="outline" className="w-full" disabled>
+            Sign in with NDHU SSO
+          </Button>
 
-        <Button variant="outline" className="w-full" disabled>
-          Sign in with NDHU SSO
-        </Button>
-
-        <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="font-medium underline underline-offset-4">
-            Register
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+          <p className="text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="font-medium underline underline-offset-4">
+              Register
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     </>
   );
 }

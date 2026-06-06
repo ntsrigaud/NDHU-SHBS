@@ -14,12 +14,13 @@ export default function ConversationPage() {
   const currentUser = useAppSelector((s) => s.auth.user);
 
   const otherUserName =
-    listing?.seller && listing.seller.id !== currentUser?.id
-      ? listing.seller.name
-      : 'Buyer';
+    listing?.seller && listing.seller.id !== currentUser?.id ? listing.seller.name : 'Buyer';
 
   return (
-    <div className="container mx-auto flex max-w-2xl flex-col px-4 py-8" style={{ height: 'calc(100vh - 56px)' }}>
+    <div
+      className="container mx-auto flex max-w-2xl flex-col px-4 py-8"
+      style={{ height: 'calc(100vh - 56px)' }}
+    >
       <Link
         href="/messages"
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

@@ -21,6 +21,70 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/ai/condition": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Classifies the condition of a book image using the AI microservice. Accepts the ID of an already-uploaded image.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AI"
+                ],
+                "summary": "Analyze book condition",
+                "operationId": "analyzeCondition",
+                "parameters": [
+                    {
+                        "description": "Image ID to analyze",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerAnalyzeConditionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerAnalyzeConditionResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Authenticates a user with email and password, returns a JWT token",
@@ -524,6 +588,74 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/images/upload": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Accepts a multipart file upload, stores it in S3, registers it in the database, and returns the image ID and CDN URL.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Images"
+                ],
+                "summary": "Upload image",
+                "operationId": "uploadImage",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image file (JPEG, PNG, WebP; max 5 MB)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerUploadImageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "413": {
+                        "description": "Request Entity Too Large",
                         "schema": {
                             "$ref": "#/definitions/model.SwaggerErrorResponse"
                         }
@@ -1809,6 +1941,27 @@ const docTemplate = `{
                 }
             }
         },
+        "model.SwaggerAnalyzeConditionRequest": {
+            "type": "object",
+            "properties": {
+                "image_id": {
+                    "description": "ImageID is the UUID of an already-uploaded image to classify.",
+                    "type": "string"
+                }
+            }
+        },
+        "model.SwaggerAnalyzeConditionResponse": {
+            "type": "object",
+            "properties": {
+                "condition": {
+                    "description": "Condition is one of: \"good\", \"moderate\", \"poor\".",
+                    "type": "string"
+                },
+                "confidence": {
+                    "type": "number"
+                }
+            }
+        },
         "model.SwaggerCreateListingRequest": {
             "type": "object",
             "properties": {
@@ -1972,6 +2125,14 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "model.SwaggerUploadImageResponse": {
+            "type": "object",
+            "properties": {
+                "image": {
+                    "$ref": "#/definitions/model.ImageResponse"
                 }
             }
         },

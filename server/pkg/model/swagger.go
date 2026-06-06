@@ -94,6 +94,27 @@ type SwaggerRegisterImageRequest struct {
 	CdnURL string `json:"cdn_url"`
 }
 
+// SwaggerUploadImageResponse is returned by POST /images/upload.
+// It contains the assigned image ID and the public CDN URL.
+type SwaggerUploadImageResponse struct {
+	Image ImageResponse `json:"image"`
+}
+
+// ── AI ───────────────────────────────────────────────────────────────────────
+
+// SwaggerAnalyzeConditionRequest is the request body for POST /ai/condition.
+type SwaggerAnalyzeConditionRequest struct {
+	// ImageID is the UUID of an already-uploaded image to classify.
+	ImageID string `json:"image_id"`
+}
+
+// SwaggerAnalyzeConditionResponse is returned by POST /ai/condition.
+type SwaggerAnalyzeConditionResponse struct {
+	// Condition is one of: "good", "moderate", "poor".
+	Condition  string  `json:"condition"`
+	Confidence float64 `json:"confidence"`
+}
+
 // ── Response view types (used in Swagger docs) ───────────────────────────────
 
 // ListingWithImages enriches a BookListing with seller info and image URLs.
@@ -119,15 +140,15 @@ type ListingWithImages struct {
 
 // CartItemResponse represents a single item in the cart.
 type CartItemResponse struct {
-	ID        uuid.UUID        `db:"id"         json:"id"`
+	ID        uuid.UUID         `db:"id"         json:"id"`
 	Listing   ListingWithImages `json:"listing"`
-	CreatedAt time.Time        `db:"created_at" json:"added_at"`
+	CreatedAt time.Time         `db:"created_at" json:"added_at"`
 }
 
 // OrderItemResponse represents a book within an order.
 type OrderItemResponse struct {
-	ID              uuid.UUID        `db:"id"                json:"id"`
-	PriceAtPurchase decimal.Decimal  `db:"price_at_purchase" json:"price_at_purchase"`
+	ID              uuid.UUID         `db:"id"                json:"id"`
+	PriceAtPurchase decimal.Decimal   `db:"price_at_purchase" json:"price_at_purchase"`
 	Listing         ListingWithImages `json:"listing"`
 }
 

@@ -60,14 +60,14 @@ export default function MessageThread({ listingId, otherUserName }: Props) {
                   'max-w-[75%] rounded-2xl px-4 py-2 text-sm',
                   isMine
                     ? 'rounded-br-sm bg-primary text-primary-foreground'
-                    : 'rounded-bl-sm bg-muted',
+                    : 'rounded-bl-sm bg-muted'
                 )}
               >
                 <p>{msg.body}</p>
                 <p
                   className={cn(
                     'mt-1 text-right text-[10px]',
-                    isMine ? 'text-primary-foreground/70' : 'text-muted-foreground',
+                    isMine ? 'text-primary-foreground/70' : 'text-muted-foreground'
                   )}
                 >
                   {new Date(msg.created_at).toLocaleTimeString([], {

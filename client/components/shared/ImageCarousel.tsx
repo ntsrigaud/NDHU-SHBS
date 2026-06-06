@@ -62,7 +62,7 @@ export default function ImageCarousel({ images }: { images: ListingImage[] }) {
               onClick={() => setIndex(i)}
               className={cn(
                 'relative h-16 w-16 flex-shrink-0 overflow-hidden rounded border-2 transition-colors',
-                i === index ? 'border-primary' : 'border-transparent',
+                i === index ? 'border-primary' : 'border-transparent'
               )}
             >
               <Image

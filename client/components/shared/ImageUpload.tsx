@@ -4,71 +4,40 @@ import { useCallback, useState } from 'react';
 import Image from 'next/image';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
-import { Condition } from '@/lib/types';
+import { aiApi, imagesApi, type AiConditionResult, type UploadedImage } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { X, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const AI_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 const MAX_FILES = 6;
-
-interface UploadedImage {
-  id: string;
-  preview: string;
-  cdn_url: string;
-}
-
-interface AiResult {
-  condition: Condition;
-  confidence: number;
-}
 
 interface Props {
   onChange: (imageIds: string[]) => void;
-  onAiResult?: (result: AiResult) => void;
+  onAiResult?: (result: AiConditionResult) => void;
 }
 
 export default function ImageUpload({ onChange, onAiResult }: Props) {
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
 
-  const uploadFile = useCallback(
-    async (file: File): Promise<UploadedImage | null> => {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      try {
-        const res = await fetch(`${AI_URL}/api/v1/images/upload`, {
-          method: 'POST',
-          credentials: 'include',
-          body: formData,
-        });
-        if (!res.ok) throw new Error('Upload failed');
-        return res.json() as Promise<UploadedImage>;
-      } catch {
-        toast.error(`Failed to upload ${file.name}`);
-        return null;
-      }
-    },
-    [],
-  );
+  const uploadFile = useCallback(async (file: File): Promise<UploadedImage | null> => {
+    try {
+      return await imagesApi.uploadImage(file);
+    } catch {
+      toast.error(`Failed to upload ${file.name}`);
+      return null;
+    }
+  }, []);
 
   const analyzeCondition = useCallback(
     async (imageId: string) => {
       if (!onAiResult) return;
       setAnalyzing(true);
       try {
-        const res = await fetch(`${AI_URL}/ai/analyze/condition`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image_id: imageId }),
-        });
-        if (!res.ok) return;
-        const result: AiResult = await res.json();
+        const result = await aiApi.analyzeCondition(imageId);
         onAiResult(result);
         toast.info(
-          `AI detected: ${result.condition} condition (${Math.round(result.confidence * 100)}% confidence)`,
+          `AI detected: ${result.condition} condition (${Math.round(result.confidence * 100)}% confidence)`
         );
       } catch {
         // AI is best-effort — don't block the seller
@@ -76,7 +45,7 @@ export default function ImageUpload({ onChange, onAiResult }: Props) {
         setAnalyzing(false);
       }
     },
-    [onAiResult],
+    [onAiResult]
   );
 
   const onDrop = useCallback(
@@ -96,7 +65,7 @@ export default function ImageUpload({ onChange, onAiResult }: Props) {
         await analyzeCondition(uploaded[0].id);
       }
     },
-    [images, uploadFile, analyzeCondition, onChange],
+    [images, uploadFile, analyzeCondition, onChange]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -118,8 +87,10 @@ export default function ImageUpload({ onChange, onAiResult }: Props) {
         {...getRootProps()}
         className={cn(
           'flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors',
-          isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50',
-          images.length >= MAX_FILES && 'cursor-not-allowed opacity-50',
+          isDragActive
+            ? 'border-primary bg-primary/5'
+            : 'border-muted-foreground/25 hover:border-primary/50',
+          images.length >= MAX_FILES && 'cursor-not-allowed opacity-50'
         )}
       >
         <input {...getInputProps()} />

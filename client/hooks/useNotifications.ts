@@ -1,20 +1,12 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
-
-export interface Notification {
-  id: string;
-  type: 'new_message' | 'order_confirmed' | 'listing_sold' | string;
-  payload: Record<string, unknown>;
-  is_read: boolean;
-  created_at: string;
-}
+import { notificationsApi, type Notification } from '@/lib/api';
 
 export function useNotifications() {
   return useQuery({
     queryKey: ['notifications'],
-    queryFn: () => apiFetch<Notification[]>('/notifications'),
+    queryFn: () => notificationsApi.getNotifications(),
     refetchInterval: 10000,
   });
 }
@@ -22,7 +14,7 @@ export function useNotifications() {
 export function useNotificationUnreadCount() {
   return useQuery({
     queryKey: ['notifications-unread'],
-    queryFn: () => apiFetch<{ count: number }>('/notifications/unread-count'),
+    queryFn: async () => ({ count: await notificationsApi.getUnreadCount() }),
     refetchInterval: 10000,
   });
 }
@@ -30,8 +22,7 @@ export function useNotificationUnreadCount() {
 export function useMarkNotificationRead() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) =>
-      apiFetch<void>(`/notifications/${id}/read`, { method: 'PATCH' }),
+    mutationFn: (id: string) => notificationsApi.markRead(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notifications'] });
       qc.invalidateQueries({ queryKey: ['notifications-unread'] });
@@ -42,7 +33,7 @@ export function useMarkNotificationRead() {
 export function useMarkAllNotificationsRead() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => apiFetch<void>('/notifications/read-all', { method: 'PATCH' }),
+    mutationFn: () => notificationsApi.markAllRead(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notifications'] });
       qc.invalidateQueries({ queryKey: ['notifications-unread'] });

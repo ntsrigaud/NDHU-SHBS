@@ -26,9 +26,7 @@ export default function GlobalError({ error, reset }: Props) {
           Go home
         </Button>
       </div>
-      {error.digest && (
-        <p className="text-xs text-muted-foreground">Error ID: {error.digest}</p>
-      )}
+      {error.digest && <p className="text-xs text-muted-foreground">Error ID: {error.digest}</p>}
     </div>
   );
 }

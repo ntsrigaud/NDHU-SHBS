@@ -1,8 +1,8 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
-import { BookListing, Condition } from '@/lib/types';
+import { listingsApi } from '@/lib/api';
+import { Condition } from '@/lib/types';
 
 export interface CreateListingPayload {
   title: string;
@@ -19,15 +19,14 @@ export interface CreateListingPayload {
 export function useMyListings() {
   return useQuery({
     queryKey: ['my-listings'],
-    queryFn: () => apiFetch<BookListing[]>('/listings/me'),
+    queryFn: () => listingsApi.getMyListings(),
   });
 }
 
 export function useCreateListing() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateListingPayload) =>
-      apiFetch<BookListing>('/listings', { method: 'POST', body: JSON.stringify(data) }),
+    mutationFn: (data: CreateListingPayload) => listingsApi.createListing(data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-listings'] }),
   });
 }
@@ -35,8 +34,7 @@ export function useCreateListing() {
 export function useUpdateListing(id: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<CreateListingPayload>) =>
-      apiFetch<BookListing>(`/listings/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    mutationFn: (data: Partial<CreateListingPayload>) => listingsApi.updateListing(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['my-listings'] });
       qc.invalidateQueries({ queryKey: ['listing', id] });
@@ -47,7 +45,7 @@ export function useUpdateListing(id: string) {
 export function useDeleteListing() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => apiFetch<void>(`/listings/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => listingsApi.deleteListing(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-listings'] }),
   });
 }

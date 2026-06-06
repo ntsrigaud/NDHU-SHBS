@@ -5,7 +5,7 @@ export default function OrderSummary({ items }: { items: CartItem[] }) {
   const total = items.reduce((sum, i) => sum + i.price, 0);
 
   return (
-    <div className="rounded-lg border p-4 space-y-3">
+    <div className="space-y-3 rounded-lg border p-4">
       <h2 className="font-semibold">Order summary</h2>
       <Separator />
       {items.map((item) => (

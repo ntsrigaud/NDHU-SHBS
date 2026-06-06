@@ -26,9 +26,7 @@ export default function EditListingPage() {
 
   if (!listing) {
     return (
-      <div className="container mx-auto px-4 py-8 text-muted-foreground">
-        Listing not found.
-      </div>
+      <div className="container mx-auto px-4 py-8 text-muted-foreground">Listing not found.</div>
     );
   }
 

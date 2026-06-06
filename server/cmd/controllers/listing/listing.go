@@ -182,10 +182,10 @@ func GetListings(db *sqlx.DB, c *fiber.Ctx) error {
 // @ID              getListing
 // @Router          /listings/{id} [get]
 func GetListing(db *sqlx.DB, c *fiber.Ctx) error {
-		id, err := uuid.Parse(c.Params("id"))
-		if err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, "invalid listing id")
-		}
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid listing id")
+	}
 
 	var listing model.ListingWithImages
 	query := `
@@ -224,10 +224,10 @@ func GetListing(db *sqlx.DB, c *fiber.Ctx) error {
 // @Security        BearerAuth
 // @Router          /listings/me [get]
 func GetMyListings(db *sqlx.DB, c *fiber.Ctx) error {
-		sellerID, err := userIDFromContext(c)
-		if err != nil {
-			return fiber.NewError(fiber.StatusUnauthorized, "unauthorized")
-		}
+	sellerID, err := userIDFromContext(c)
+	if err != nil {
+		return fiber.NewError(fiber.StatusUnauthorized, "unauthorized")
+	}
 
 	var listings []model.ListingWithImages
 	if err := db.Select(&listings, `

@@ -66,7 +66,7 @@ export default function BookDetailPage() {
         price: listing!.price,
         imageUrl: listing!.images?.[0]?.cdn_url ?? '',
         sellerName: listing!.seller?.name ?? 'Seller',
-      }),
+      })
     );
     toast.success('Added to cart');
   }
@@ -120,11 +120,7 @@ export default function BookDetailPage() {
           )}
 
           <div className="flex gap-3 pt-2">
-            <Button
-              className="flex-1"
-              onClick={handleAddToCart}
-              disabled={isSold || alreadyInCart}
-            >
+            <Button className="flex-1" onClick={handleAddToCart} disabled={isSold || alreadyInCart}>
               <ShoppingCart className="mr-2 h-4 w-4" />
               {isSold ? 'Sold' : alreadyInCart ? 'In cart' : 'Add to cart'}
             </Button>

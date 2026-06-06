@@ -44,9 +44,7 @@ export default function MessagesPage() {
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">{conv.other_user.name}</p>
-                <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                  {conv.last_message}
-                </p>
+                <p className="mt-0.5 truncate text-sm text-muted-foreground">{conv.last_message}</p>
               </div>
               {conv.unread_count > 0 && (
                 <Badge className="mt-1 flex-shrink-0">{conv.unread_count}</Badge>

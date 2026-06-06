@@ -36,11 +36,11 @@ func TestIsStrongPassword(t *testing.T) {
 		want     bool
 	}{
 		{"SecurePass1!", true},
-		{"short1!", false},             // too short
-		{"alllowercase1!", false},      // no uppercase
-		{"ALLUPPERCASE1!", false},      // no lowercase
-		{"NoDigitPass!", false},        // no digit
-		{"NoSpecial123", false},        // no special char
+		{"short1!", false},        // too short
+		{"alllowercase1!", false}, // no uppercase
+		{"ALLUPPERCASE1!", false}, // no lowercase
+		{"NoDigitPass!", false},   // no digit
+		{"NoSpecial123", false},   // no special char
 		{"Valid@Passw0rd", true},
 		{"", false},
 	}

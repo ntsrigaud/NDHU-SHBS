@@ -55,7 +55,7 @@ export default function RegisterPage() {
         onError: (err) => {
           toast.error(err.message ?? 'Registration failed. Please try again.');
         },
-      },
+      }
     );
   }
 
