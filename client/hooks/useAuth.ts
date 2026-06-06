@@ -2,9 +2,9 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { authApi, type LoginInput, type RegisterInput } from '@/lib/api';
+import { authApi, applyToken, type LoginInput, type RegisterInput } from '@/lib/api';
 import { useAppDispatch } from '@/lib/store';
-import { setUser, clearCredentials } from '@/slices/authSlice';
+import { setCredentials, setUser, clearCredentials } from '@/slices/authSlice';
 import { clearCart } from '@/slices/cartSlice';
 
 export function useLogin() {
@@ -14,7 +14,11 @@ export function useLogin() {
   return useMutation({
     mutationFn: (data: LoginInput) => authApi.login(data),
     onSuccess: (res) => {
-      if (res.user) {
+      if (res.user && res.token) {
+        dispatch(setCredentials({ user: res.user, token: res.token, expiresAt: res.expires_at }));
+        applyToken(res.token);
+      } else if (res.user) {
+        // Fallback: no token in response (should not happen with current server)
         dispatch(setUser(res.user));
       }
       router.push('/');
@@ -40,6 +44,7 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => authApi.logout(),
     onSettled: () => {
+      applyToken(null);
       dispatch(clearCredentials());
       dispatch(clearCart());
       router.push('/login');

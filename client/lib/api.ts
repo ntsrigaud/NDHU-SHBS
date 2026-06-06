@@ -48,6 +48,20 @@ function getApiBaseUrl(): string {
 
 export const SERVER_BASE_URL = getServerBaseUrl();
 
+/**
+ * Reads the persisted JWT from localStorage. Used only during module
+ * initialisation so the singleton API client has a token from the very
+ * first page load, even before SessionBootstrap runs.
+ */
+function getStoredToken(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    return localStorage.getItem('auth_token') ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function createApi(token?: string) {
   const api = new GeneratedApi<SecurityData>({
     baseUrl: getApiBaseUrl(),
@@ -134,7 +148,16 @@ export interface AiConditionResult {
   confidence: number;
 }
 
-const api = createApi();
+const api = createApi(getStoredToken());
+
+/**
+ * Updates the JWT stored in the module-level API singleton's securityData.
+ * Call this after login (with the new token) and after logout (with null)
+ * so every subsequent API request sends the correct Authorization header.
+ */
+export function applyToken(token: string | null): void {
+  api.setSecurityData(token ? { token } : null);
+}
 
 function toAuthUser(user: ModelUser): User {
   return {

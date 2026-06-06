@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, MessageSquare } from 'lucide-react';
-import { authApi } from '@/lib/api';
+import { authApi, applyToken } from '@/lib/api';
 import { useUnreadCount } from '@/hooks/useMessages';
 import NotificationBell from './NotificationBell';
 
@@ -32,6 +32,7 @@ export default function Navbar() {
     } catch {
       // proceed with local logout even if the server call fails
     }
+    applyToken(null);
     dispatch(clearCredentials());
     dispatch(clearCart());
     router.push('/login');
