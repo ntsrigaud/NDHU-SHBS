@@ -543,6 +543,74 @@ const docTemplate = `{
                 }
             }
         },
+        "/images/upload": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Accepts a multipart file upload, stores it in S3, registers it in the database, and returns the image ID and CDN URL.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Images"
+                ],
+                "summary": "Upload image",
+                "operationId": "uploadImage",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image file (JPEG, PNG, WebP; max 5 MB)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerUploadImageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "413": {
+                        "description": "Request Entity Too Large",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/model.SwaggerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/images/{id}": {
             "get": {
                 "description": "Returns image metadata by ID",
@@ -1972,6 +2040,14 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "model.SwaggerUploadImageResponse": {
+            "type": "object",
+            "properties": {
+                "image": {
+                    "$ref": "#/definitions/model.ImageResponse"
                 }
             }
         },

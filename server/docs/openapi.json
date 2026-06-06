@@ -655,6 +655,103 @@
                 }
             }
         },
+        "/images/upload": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Accepts a multipart file upload, stores it in S3, registers it in the database, and returns the image ID and CDN URL.",
+                "tags": [
+                    "Images"
+                ],
+                "summary": "Upload image",
+                "operationId": "uploadImage",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "description": "Image file (JPEG, PNG, WebP; max 5 MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "required": [
+                                    "file"
+                                ]
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/model.SwaggerUploadImageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/model.SwaggerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/model.SwaggerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Request Entity Too Large",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/model.SwaggerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/model.SwaggerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/model.SwaggerErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/images/{id}": {
             "get": {
                 "description": "Returns image metadata by ID",
@@ -2377,6 +2474,14 @@
                     },
                     "name": {
                         "type": "string"
+                    }
+                }
+            },
+            "model.SwaggerUploadImageResponse": {
+                "type": "object",
+                "properties": {
+                    "image": {
+                        "$ref": "#/components/schemas/model.ImageResponse"
                     }
                 }
             },
