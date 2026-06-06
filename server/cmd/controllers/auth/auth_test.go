@@ -163,7 +163,7 @@ func decodeBody(t *testing.T, res *http.Response, dest any) {
 func TestRegister_Success(t *testing.T) {
 	req := jsonReq("POST", "/api/v1/auth/register", map[string]string{
 		"name":     "Test User",
-		"email":    "register_success@test.com",
+		"email":    "411221367@gms.ndhu.edu.tw",
 		"password": "Str0ngP@ssword!",
 	})
 	res, err := testApp.Test(req, -1)
@@ -187,7 +187,7 @@ func TestRegister_Success(t *testing.T) {
 func TestRegister_DuplicateEmail(t *testing.T) {
 	payload := map[string]string{
 		"name":     "Dup User",
-		"email":    "dup@test.com",
+		"email":    "411221368@gms.ndhu.edu.tw",
 		"password": "Str0ngP@ssword!",
 	}
 	first, _ := testApp.Test(jsonReq("POST", "/api/v1/auth/register", payload), -1)
@@ -200,17 +200,34 @@ func TestRegister_DuplicateEmail(t *testing.T) {
 func TestRegister_WeakPassword(t *testing.T) {
 	req := jsonReq("POST", "/api/v1/auth/register", map[string]string{
 		"name":     "Weak",
-		"email":    "weak@test.com",
+		"email":    "411221369@gms.ndhu.edu.tw",
 		"password": "abc",
 	})
 	res, _ := testApp.Test(req, -1)
 	assertStatus(t, res, http.StatusUnprocessableEntity)
 }
 
+func TestRegister_InvalidStudentEmail(t *testing.T) {
+	req := jsonReq("POST", "/api/v1/auth/register", map[string]string{
+		"name":     "Wrong Domain",
+		"email":    "student@gmail.com",
+		"password": "Str0ngP@ssword!",
+	})
+	res, _ := testApp.Test(req, -1)
+	assertStatus(t, res, http.StatusUnprocessableEntity)
+
+	var body map[string]any
+	decodeBody(t, res, &body)
+
+	if body["error"] != "email must be a valid NDHU student address in the format student_id@gms.ndhu.edu.tw" {
+		t.Fatalf("unexpected error: %v", body["error"])
+	}
+}
+
 func TestRegister_MissingName(t *testing.T) {
 	req := jsonReq("POST", "/api/v1/auth/register", map[string]string{
 		"name":     "",
-		"email":    "noname@test.com",
+		"email":    "411221370@gms.ndhu.edu.tw",
 		"password": "Str0ngP@ssword!",
 	})
 	res, _ := testApp.Test(req, -1)
