@@ -67,9 +67,10 @@ app = FastAPI(
     root_path="/ai",
 )
 
-# Default client used by tests that skip the lifespan context (TestClient without `with`).
-# The lifespan always replaces this with a fresh client in production/Docker.
-app.state.http_client = httpx.AsyncClient(timeout=30.0)
+# http_client is created in the lifespan (production) or injected by tests
+# (tests/conftest.py). Kept as None at import time so no client is ever created
+# and then discarded unclosed.
+app.state.http_client = None
 
 # CORS is restricted to the Docker bridge network (Go API server only).
 # The wildcard below is safe because Traefik never routes /ai from external
