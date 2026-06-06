@@ -169,6 +169,30 @@ function toAuthUser(user: ModelUser): User {
   };
 }
 
+function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return fallback;
+}
+
+function toNullableNumber(value: unknown): number | null {
+  if (value == null) {
+    return null;
+  }
+
+  const parsed = toNumber(value, Number.NaN);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function toBookListing(listing: ModelListingWithImages): BookListing {
   return {
     id: listing.id ?? '',
@@ -178,11 +202,11 @@ function toBookListing(listing: ModelListingWithImages): BookListing {
     isbn: listing.isbn ?? null,
     course_code: listing.course_code ?? null,
     department: listing.department ?? null,
-    price: listing.price ?? 0,
+    price: toNumber(listing.price),
     condition: (listing.condition as BookListing['condition']) ?? 'good',
     status: (listing.status as BookListing['status']) ?? 'active',
     description: listing.description ?? null,
-    ai_confidence: listing.ai_confidence ?? null,
+    ai_confidence: toNullableNumber(listing.ai_confidence),
     created_at: listing.created_at ?? '',
     updated_at: listing.updated_at ?? '',
     images: (listing.image_urls ?? []).map((cdnUrl, index) => ({
@@ -207,7 +231,7 @@ function toCartItem(item: ModelCartItemResponse): CartItem {
   return {
     listingId: listing?.id ?? '',
     title: listing?.title ?? '',
-    price: listing?.price ?? 0,
+    price: toNumber(listing?.price),
     imageUrl: listing?.image_urls?.[0] ?? '',
     sellerName: listing?.seller_name ?? 'Seller',
   };
@@ -269,12 +293,12 @@ function toOrder(order: ModelOrderResponse): Order {
   return {
     id: order.id ?? '',
     status: order.status ?? 'pending',
-    total: order.total_amount ?? 0,
+    total: toNumber(order.total_amount),
     created_at: order.created_at ?? '',
     items: (order.items ?? []).map((item) => ({
       listing_id: item.listing?.id ?? item.id ?? '',
       title: item.listing?.title ?? 'Listing',
-      price: item.price_at_purchase ?? 0,
+      price: toNumber(item.price_at_purchase),
       image_url: item.listing?.image_urls?.[0] ?? '',
     })),
   };
