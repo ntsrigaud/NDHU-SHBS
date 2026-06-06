@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, MessageSquare } from 'lucide-react';
-import { apiFetch } from '@/lib/api';
+import { authApi } from '@/lib/api';
 import { useUnreadCount } from '@/hooks/useMessages';
 import NotificationBell from './NotificationBell';
 
@@ -28,7 +28,7 @@ export default function Navbar() {
 
   async function handleLogout() {
     try {
-      await apiFetch('/auth/logout', { method: 'POST' });
+      await authApi.logout();
     } catch {
       // proceed with local logout even if the server call fails
     }
