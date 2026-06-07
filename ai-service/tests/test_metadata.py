@@ -28,8 +28,18 @@ _ISBN = "9780131103627"  # The C Programming Language
 _IMG = "dGVzdA=="  # placeholder base64 (not a real image)
 
 
+_IMG_FIRST = base64.b64encode(b"first").decode()
+_IMG_SECOND = base64.b64encode(b"second").decode()
+
+
 def _barcode_png_base64(isbn: str) -> str:
     """Generate an EAN-13 barcode for `isbn` and return it as base64 PNG."""
+    # The recommended way is to use create_barcode and then convert to image.
+    # zxing-cpp provides a way to get a bitmap or similar.
+    # Since I cannot easily verify the exact new API without environment,
+    # I will stick to the most likely correct form or just suppress the warning.
+    # Actually, the warning suggested: use create_barcode() and write_barcode_to_image().
+    # However, for testing, we just need a valid barcode image.
     zimg = zxingcpp.write_barcode(zxingcpp.BarcodeFormat.EAN13, isbn)
     h, w = zimg.shape[0], zimg.shape[1]
     pil = Image.frombytes("L", (w, h), bytes(zimg))
@@ -117,12 +127,12 @@ def test_barcode_found_in_second_image(
     # First image has no barcode, second does — the pass should scan all images.
     monkeypatch.setattr(
         "routers.metadata._decode_isbn",
-        lambda img: _ISBN if img == "second" else None,
+        lambda img: _ISBN if img == _IMG_SECOND else None,
     )
     mock_http_client.get.return_value = _ol_lookup(_ISBN, "Title", ["Author"])
 
     resp = client.post(
-        "/analyze/metadata", json={"images_base64": ["first", "second"]}
+        "/analyze/metadata", json={"images_base64": [_IMG_FIRST, _IMG_SECOND]}
     )
 
     assert resp.status_code == 200
@@ -220,3 +230,4 @@ def test_ocr_text_but_no_search_match(
 def test_empty_images_list_rejected(client: TestClient) -> None:
     resp = client.post("/analyze/metadata", json={"images_base64": []})
     assert resp.status_code == 422
+
