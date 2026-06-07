@@ -1,6 +1,10 @@
-# Traefik dynamic routing — client is served by Vercel, not this host.
+# Traefik dynamic routing for local Docker development.
 http:
   routers:
+    client:
+      rule: "PathPrefix(`/`)"
+      service: client
+
     api:
       rule: "PathPrefix(`/api`) || PathPrefix(`/swagger`) || Path(`/live`) || Path(`/ready`)"
       service: api
@@ -18,6 +22,11 @@ http:
           - /ai
 
   services:
+    client:
+      loadBalancer:
+        servers:
+          - url: "http://client:3000"
+
     api:
       loadBalancer:
         servers:
