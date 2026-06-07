@@ -49,7 +49,7 @@ export default function NotificationBell() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="relative outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground focus-visible:ring-offset-2">
+        <button className="relative outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-primary-foreground focus-visible:ring-offset-2">
           <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground" asChild>
             <span>
               <Bell className="h-5 w-5" />
