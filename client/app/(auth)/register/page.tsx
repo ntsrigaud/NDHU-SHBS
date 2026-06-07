@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -41,6 +42,7 @@ const registerSchema = z
 type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
+  const router = useRouter();
   const { mutate: register, isPending, error } = useRegister();
 
   const form = useForm<RegisterValues>({
@@ -52,10 +54,14 @@ export default function RegisterPage() {
     register(
       { name, email, password },
       {
+        onSuccess: () => {
+          toast.success('Account created! Check your email to verify your address.');
+          router.push('/login?registered=1');
+        },
         onError: (err) => {
           toast.error(err.message ?? 'Registration failed. Please try again.');
         },
-      }
+      },
     );
   }
 
