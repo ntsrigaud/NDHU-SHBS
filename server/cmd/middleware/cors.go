@@ -30,6 +30,7 @@ func CorsHandler() fiber.Handler {
 			AllowOrigins:     "*",
 			AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 			AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+			ExposeHeaders:    "X-Total-Count",
 			AllowCredentials: false,
 		})
 	}
@@ -77,6 +78,7 @@ func CorsHandler() fiber.Handler {
 		},
 		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		ExposeHeaders:    "X-Total-Count",
 		AllowCredentials: true,
 	})
 }
