@@ -147,6 +147,7 @@ export interface ModelSwaggerResendVerificationRequest {
 
 export interface ModelSwaggerSendMessageRequest {
   body?: string;
+  receiver_id?: string;
 }
 
 export interface ModelSwaggerUpdateListingRequest {
@@ -856,7 +857,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
 
     /**
-     * @description Sends a message from the authenticated user to the listing seller. Creates a notification for the receiver.
+     * @description Sends a message from the authenticated user. If the sender is the seller, they must provide the receiver_id (the buyer). If the sender is a buyer, the message is sent to the seller.
      *
      * @tags Messages
      * @name SendMessage

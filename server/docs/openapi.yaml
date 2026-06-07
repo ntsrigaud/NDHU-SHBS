@@ -898,8 +898,9 @@ paths:
     post:
       security:
         - BearerAuth: []
-      description: Sends a message from the authenticated user to the listing seller.
-        Creates a notification for the receiver.
+      description: Sends a message from the authenticated user. If the sender is the
+        seller, they must provide the receiver_id (the buyer). If the sender is
+        a buyer, the message is sent to the seller.
       tags:
         - Messages
       summary: Send a message about a listing
@@ -916,7 +917,7 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/model.SwaggerSendMessageRequest"
-        description: Message body
+        description: Message body and optional receiver_id
         required: true
       responses:
         "201":
@@ -1564,6 +1565,8 @@ components:
       type: object
       properties:
         body:
+          type: string
+        receiver_id:
           type: string
     model.SwaggerUpdateListingRequest:
       type: object
