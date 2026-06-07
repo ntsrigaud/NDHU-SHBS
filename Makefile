@@ -19,8 +19,8 @@ SWAG          ?= $(GO) run github.com/swaggo/swag/cmd/swag@v1.16.6
 help:
 	@printf "NDHU Second-Hand Book Store — available targets\n\n"
 	@printf "  install           Install client and AI service dependencies\n"
-	@printf "  format            Format client (Prettier) and server (gofmt)\n"
-	@printf "  check             Run lint, typecheck, go vet, and all tests\n"
+	@printf "  format            Format client (Prettier), server (gofmt), and AI (Ruff)\n"
+	@printf "  check             Run all linters, typechecks, and tests across the system\n"
 	@printf "  build             Build client production bundle\n\n"
 	@printf "  stack-up          Start full Docker Compose stack\n"
 	@printf "  stack-down        Stop and remove containers\n"
@@ -35,7 +35,10 @@ help:
 	@printf "  client-build      Build Next.js for production\n"
 	@printf "  client-format     Format client sources with Prettier\n\n"
 	@printf "  ai-install        Install AI service dependencies\n"
-	@printf "  ai-dev            Start AI FastAPI service locally\n\n"
+	@printf "  ai-dev            Start AI FastAPI service locally\n"
+	@printf "  ai-test           Run AI service tests with pytest\n"
+	@printf "  ai-lint           Lint AI service with Ruff\n"
+	@printf "  ai-format         Format AI service with Ruff\n\n"
 	@printf "  generate-api      Regenerate typed API client from OpenAPI spec\n"
 	@printf "  seed              Seed staging database with demo data\n"
 
@@ -46,9 +49,9 @@ help:
 
 install: client-install ai-install
 
-format: client-format server-format
+format: client-format server-format ai-format
 
-check: server-vet server-test client-lint client-typecheck
+check: server-vet server-test client-lint client-typecheck ai-lint ai-test
 
 build: client-build
 
@@ -116,13 +119,22 @@ client-typecheck:
 # ──────────────────────────────────────────────────────────────────────────────
 # AI service
 # ──────────────────────────────────────────────────────────────────────────────
-.PHONY: ai-install ai-dev
+.PHONY: ai-install ai-dev ai-test ai-lint ai-format
 
 ai-install:
 	cd $(AI_DIR) && $(PIP) install -r requirements.txt
 
 ai-dev:
 	cd $(AI_DIR) && uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+ai-test:
+	cd $(AI_DIR) && $(PYTHON) -m pytest
+
+ai-lint:
+	cd $(AI_DIR) && $(PYTHON) -m ruff check .
+
+ai-format:
+	cd $(AI_DIR) && $(PYTHON) -m ruff format .
 
 # ──────────────────────────────────────────────────────────────────────────────
 # API code generation
