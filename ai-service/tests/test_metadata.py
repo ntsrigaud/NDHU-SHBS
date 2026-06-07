@@ -231,3 +231,28 @@ def test_empty_images_list_rejected(client: TestClient) -> None:
     resp = client.post("/analyze/metadata", json={"images_base64": []})
     assert resp.status_code == 422
 
+
+def test_metadata_via_image_url(
+    client: TestClient, mock_http_client: AsyncMock, monkeypatch
+) -> None:
+    monkeypatch.setattr("routers.metadata._decode_isbn", lambda _: None)
+    monkeypatch.setattr(
+        "routers.metadata._run_ocr", lambda _raw: ["FLUENT PYTHON", "Luciano Ramalho"]
+    )
+    
+    # Mocking both the image download and the catalog search
+    image_resp = MagicMock()
+    image_resp.content = b"fake-image-bytes"
+    image_resp.status_code = 200
+    image_resp.raise_for_status = MagicMock()
+    
+    search_resp = _ol_search("Fluent Python", ["Luciano Ramalho"], ["9781491946008"])
+    
+    mock_http_client.get.side_effect = [image_resp, search_resp]
+
+    resp = client.post("/analyze/metadata", json={"image_urls": ["http://example.com/book.jpg"]})
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["isbn"] == "9781491946008"
+    assert data["title"] == "Fluent Python"
