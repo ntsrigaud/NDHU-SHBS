@@ -212,6 +212,28 @@ func TestCorsHandler_DeniesUnknownOrigin(t *testing.T) {
 	}
 }
 
+func TestPrivateNetworkAccessHandler(t *testing.T) {
+	app := newApp()
+	app.Use(middleware.PrivateNetworkAccessHandler())
+	app.Options("/", func(c *fiber.Ctx) error { return c.SendStatus(fiber.StatusNoContent) })
+
+	// Case 1: OPTIONS request with PNA header
+	req := httptest.NewRequest(http.MethodOptions, "/", nil)
+	req.Header.Set("Access-Control-Request-Private-Network", "true")
+	resp := do(t, app, req)
+	if resp.Header.Get("Access-Control-Allow-Private-Network") != "true" {
+		t.Error("expected Access-Control-Allow-Private-Network header to be true")
+	}
+
+	// Case 2: GET request with PNA header (should NOT set the header)
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Access-Control-Request-Private-Network", "true")
+	resp = do(t, app, req)
+	if resp.Header.Get("Access-Control-Allow-Private-Network") != "" {
+		t.Error("expected Access-Control-Allow-Private-Network header to be empty for GET")
+	}
+}
+
 // ── HealthChecks ──────────────────────────────────────────────────────────────
 
 // fakeDB implements the ping interface used by services.Database.
