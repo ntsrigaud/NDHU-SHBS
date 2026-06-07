@@ -2,7 +2,7 @@
 
 A campus-exclusive marketplace for National Dong Hwa University students to buy and sell used textbooks, with AI-powered condition classification and automated metadata extraction.
 
-**Team Members**: Neil Taison Rigaud ·  Jn Neil Alexander ·  Sley Hortes · Jaime Medina  
+**Team Members**: Neil Taison Rigaud · Jn Neil Alexander · Sley Hortes · Jaime Medina  
 **Course**: Software Engineering, April 2026
 
 ---
@@ -52,12 +52,16 @@ make install
 make stack-up
 ```
 
-| Service | URL                       |
-| ------- | ------------------------- |
-| Client  | http://localhost:3000     |
-| API     | http://localhost:8080/api |
-| AI      | http://localhost:8000     |
-| Traefik | http://localhost:8081     |
+| Service | URL                                               |
+| ------- | ------------------------------------------------- |
+| Client  | http://localhost or http://localhost:3001         |
+| API     | http://localhost/api or http://localhost:8082/api |
+| AI      | internal only (proxied by API)                    |
+| Traefik | http://localhost:8081                             |
+
+The Docker stack publishes the API on host port `8082` by default to avoid the common `8080` conflict on macOS.
+The Docker stack publishes the client on host port `3001` by default to avoid the common `3000` conflict with local Node dev servers.
+Override it when needed: `API_HOST_PORT=8090 make stack-up`.
 
 ### 4. Local development (without Docker)
 
@@ -127,4 +131,4 @@ NDHU-SHBS/
 
 - [Project Proposal](docs/project-proposal.md)
 - [Implementation Roadmap](docs/implementation-roadmap.md)
-- API docs: `http://localhost:8080/swagger/` (when stack is running)
+- API docs: `http://localhost/swagger/` or `http://localhost:8082/swagger/` (when stack is running)

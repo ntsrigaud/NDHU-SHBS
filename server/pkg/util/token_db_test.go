@@ -9,6 +9,7 @@ import (
 	"shbs-server/pkg/util"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
@@ -71,5 +72,15 @@ func TestInvalidateToken_DBError_Returns500(t *testing.T) {
 	}
 	if resp.StatusCode != http.StatusInternalServerError {
 		t.Errorf("expected 500 when DB is unreachable, got %d", resp.StatusCode)
+	}
+}
+
+// ── CreateVerificationToken ──────────────────────────────────────────────────
+
+func TestCreateVerificationToken_DBError(t *testing.T) {
+	db := unreachableDB(t)
+	_, err := util.CreateVerificationToken(db, uuid.New(), "verify", time.Hour)
+	if err == nil {
+		t.Error("expected error when DB is unreachable, got nil")
 	}
 }

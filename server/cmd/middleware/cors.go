@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net/url"
 	"os"
 	"strings"
 
@@ -34,6 +35,21 @@ func CorsHandler() fiber.Handler {
 	}
 
 	known := strings.Split(raw, ",")
+	allowLoopback := false
+	for _, candidate := range known {
+		origin := strings.TrimSpace(candidate)
+		if origin == "" {
+			continue
+		}
+		parsed, err := url.Parse(origin)
+		if err == nil {
+			host := strings.ToLower(parsed.Hostname())
+			if host == "localhost" || host == "127.0.0.1" {
+				allowLoopback = true
+				break
+			}
+		}
+	}
 
 	return cors.New(cors.Config{
 		// AllowOriginsFunc is evaluated when AllowOrigins does not match,
@@ -44,6 +60,15 @@ func CorsHandler() fiber.Handler {
 			for _, o := range known {
 				if strings.TrimSpace(o) == origin {
 					return true
+				}
+			}
+			if allowLoopback {
+				parsed, err := url.Parse(origin)
+				if err == nil {
+					host := strings.ToLower(parsed.Hostname())
+					if host == "localhost" || host == "127.0.0.1" {
+						return true
+					}
 				}
 			}
 			// Allow all Vercel preview deployments (*.vercel.app).
