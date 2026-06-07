@@ -12,11 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SlidersHorizontal, X } from 'lucide-react';
 
 const CONDITIONS = [
-  { value: 'good', label: 'Good' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'poor', label: 'Poor' },
+  { value: 'good', label: '🟢 Good' },
+  { value: 'moderate', label: '🟡 Moderate' },
+  { value: 'poor', label: '🔴 Poor' },
 ];
 
 export default function FilterSidebar() {
@@ -44,14 +45,23 @@ export default function FilterSidebar() {
   );
 
   return (
-    <aside className="space-y-6">
+    <div className="space-y-5">
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+        <SlidersHorizontal className="h-4 w-4" />
+        Filter books
+      </div>
+
+      <Separator />
+
       <div className="space-y-2">
-        <Label>Condition</Label>
+        <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Condition
+        </Label>
         <Select
           value={searchParams.get('condition') ?? ''}
           onValueChange={(v: string) => setParam('condition', v === 'all' ? '' : v)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="h-9">
             <SelectValue placeholder="Any condition" />
           </SelectTrigger>
           <SelectContent>
@@ -66,7 +76,9 @@ export default function FilterSidebar() {
       </div>
 
       <div className="space-y-2">
-        <Label>Price range (NT$)</Label>
+        <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Price range (NT$)
+        </Label>
         <div className="flex items-center gap-2">
           <Input
             type="number"
@@ -74,7 +86,7 @@ export default function FilterSidebar() {
             min={0}
             defaultValue={searchParams.get('price_min') ?? ''}
             onBlur={(e) => setParam('price_min', e.target.value)}
-            className="w-full"
+            className="h-9"
           />
           <span className="text-muted-foreground">–</span>
           <Input
@@ -83,28 +95,37 @@ export default function FilterSidebar() {
             min={0}
             defaultValue={searchParams.get('price_max') ?? ''}
             onBlur={(e) => setParam('price_max', e.target.value)}
-            className="w-full"
+            className="h-9"
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label>Department</Label>
+        <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Department
+        </Label>
         <Input
           placeholder="e.g. Computer Science"
           defaultValue={searchParams.get('department') ?? ''}
           onBlur={(e) => setParam('department', e.target.value)}
+          className="h-9"
         />
       </div>
 
       {hasFilters && (
         <>
           <Separator />
-          <Button variant="ghost" className="w-full" onClick={clearFilters}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-muted-foreground hover:text-foreground"
+            onClick={clearFilters}
+          >
+            <X className="mr-1.5 h-3.5 w-3.5" />
             Clear filters
           </Button>
         </>
       )}
-    </aside>
+    </div>
   );
 }

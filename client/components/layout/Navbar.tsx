@@ -39,16 +39,16 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-primary text-primary-foreground shadow-sm">
+    <header className="sticky top-0 z-50 w-full shadow-md" style={{ background: 'linear-gradient(135deg, hsl(152 52% 20%) 0%, hsl(158 48% 26%) 100%)' }}>
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-foreground/15 text-sm font-bold">
+        <Link href="/" className="group flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-base font-bold text-white ring-1 ring-white/20 transition-all group-hover:bg-white/25">
             東
           </div>
           <div className="leading-tight">
-            <p className="text-sm font-bold tracking-wide">NDHU 二手書市集</p>
-            <p className="text-[10px] text-primary-foreground/70">Second-Hand Book Store</p>
+            <p className="text-[15px] font-bold tracking-wide text-white">NDHU 二手書市集</p>
+            <p className="text-[10px] font-medium tracking-wider text-white/60 uppercase">Second-Hand Book Store</p>
           </div>
         </Link>
 
@@ -58,10 +58,10 @@ export default function Navbar() {
               <NotificationBell />
 
               <Link href="/messages" className="relative">
-                <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
+                <Button variant="ghost" size="icon" className="text-white/80 hover:bg-white/10 hover:text-white">
                   <MessageSquare className="h-5 w-5" />
                   {(unread?.count ?? 0) > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-semibold text-accent-foreground">
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white shadow">
                       {unread!.count}
                     </span>
                   )}
@@ -69,10 +69,10 @@ export default function Navbar() {
               </Link>
 
               <Link href="/cart" className="relative">
-                <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
+                <Button variant="ghost" size="icon" className="text-white/80 hover:bg-white/10 hover:text-white">
                   <ShoppingCart className="h-5 w-5" />
                   {cartCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-semibold text-accent-foreground">
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white shadow">
                       {cartCount}
                     </span>
                   )}
@@ -81,20 +81,19 @@ export default function Navbar() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="ml-1 rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-primary-foreground focus-visible:ring-offset-2">
-                    <Avatar className="h-8 w-8 border-2 border-primary-foreground/30">
-                      <AvatarFallback className="bg-accent text-accent-foreground text-sm font-semibold">
+                  <button className="ml-1 rounded-full outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-white/50">
+                    <Avatar className="h-8 w-8 ring-2 ring-white/30">
+                      <AvatarFallback className="bg-accent text-white text-sm font-bold">
                         {user.name[0]?.toUpperCase() ?? 'U'}
                       </AvatarFallback>
                     </Avatar>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <div className="px-3 py-2">
-                    <p className="text-sm font-medium">{user.name}</p>
+                <DropdownMenuContent align="end" className="w-52 shadow-xl">
+                  <div className="px-3 py-2.5 border-b">
+                    <p className="text-sm font-semibold">{user.name}</p>
                     <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                   </div>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/my-listings">My Listings</Link>
                   </DropdownMenuItem>
@@ -105,7 +104,7 @@ export default function Navbar() {
                     <Link href="/messages">Messages</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -113,10 +112,10 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Button variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground" asChild>
+              <Button variant="ghost" className="text-white/80 hover:bg-white/10 hover:text-white" asChild>
                 <Link href="/login">Login</Link>
               </Button>
-              <Button className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
+              <Button className="bg-accent hover:bg-accent/90 text-white font-semibold shadow-md" asChild>
                 <Link href="/register">Register</Link>
               </Button>
             </>
