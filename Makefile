@@ -58,7 +58,7 @@ build: client-build
 .PHONY: stack-up stack-down stack-logs
 
 stack-up:
-	$(COMPOSE) up -d --build
+	$(COMPOSE) up -d --build --remove-orphans
 
 stack-down:
 	$(COMPOSE) down
