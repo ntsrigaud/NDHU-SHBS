@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '@/lib/store';
 import { addItem } from '@/slices/cartSlice';
 import ImageCarousel from '@/components/shared/ImageCarousel';
 import ConditionBadge from '@/components/shared/ConditionBadge';
+import InlineChatPanel from '@/components/shared/InlineChatPanel';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -52,6 +53,8 @@ export default function BookDetailPage() {
 
   const alreadyInCart = cartItems.some((i) => i.listingId === listing.id);
   const isSold = listing.status === 'sold' || listing.status === 'delisted';
+  const isOwnListing = user?.id === listing.seller_id;
+  const sellerName = listing.seller?.name ?? 'Seller';
 
   function handleAddToCart() {
     if (!user) {
@@ -65,8 +68,8 @@ export default function BookDetailPage() {
         title: listing!.title,
         price: listing!.price,
         imageUrl: listing!.images?.[0]?.cdn_url ?? '',
-        sellerName: listing!.seller?.name ?? 'Seller',
-      })
+        sellerName,
+      }),
     );
     toast.success('Added to cart');
   }
@@ -91,7 +94,7 @@ export default function BookDetailPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-3xl font-bold">NT${listing.price.toFixed(0)}</span>
+            <span className="text-3xl font-bold text-accent">NT${listing.price.toFixed(0)}</span>
             <ConditionBadge condition={listing.condition} />
             {listing.status === 'reserved' && <Badge variant="secondary">Reserved</Badge>}
           </div>
@@ -119,25 +122,45 @@ export default function BookDetailPage() {
             </div>
           )}
 
+          {/* Action buttons */}
           <div className="flex gap-3 pt-2">
-            <Button className="flex-1" onClick={handleAddToCart} disabled={isSold || alreadyInCart}>
+            <Button
+              className="flex-1"
+              onClick={handleAddToCart}
+              disabled={isSold || alreadyInCart}
+            >
               <ShoppingCart className="mr-2 h-4 w-4" />
               {isSold ? 'Sold' : alreadyInCart ? 'In cart' : 'Add to cart'}
             </Button>
-            {user && listing.seller_id !== user.id && !isSold && (
-              <Button variant="outline" asChild>
-                <Link href={`/messages/${listing.id}`}>
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Message seller
-                </Link>
+
+            {/* Redirect unauthenticated users to login */}
+            {!user && !isSold && (
+              <Button variant="outline" onClick={() => router.push(`/login?next=/books/${id}`)}>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Message seller
               </Button>
             )}
           </div>
 
           {listing.seller && (
             <p className="text-sm text-muted-foreground">
-              Listed by <span className="font-medium">{listing.seller.name}</span>
+              Listed by <span className="font-medium">{sellerName}</span>
             </p>
+          )}
+
+          {/* Inline chat — shown only to logged-in buyers */}
+          {user && !isOwnListing && !isSold && (
+            <InlineChatPanel listingId={listing.id} sellerName={sellerName} />
+          )}
+
+          {/* Own listing notice */}
+          {isOwnListing && (
+            <div className="rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground">
+              This is your listing.{' '}
+              <Link href="/messages" className="font-medium text-primary underline underline-offset-4">
+                View messages from buyers →
+              </Link>
+            </div>
           )}
         </div>
       </div>
