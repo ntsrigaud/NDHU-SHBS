@@ -35,16 +35,16 @@ router = APIRouter(prefix="/analyze", tags=["condition"])
 # label and barcode are book identifiers, not physical defects — weight 0.0.
 # annotations/crease/nick/spot have limited training data (faded UI boxes) — weight 0.3.
 _SEVERITY: dict[str, float] = {
-    "tear":        1.0,
-    "chip":        1.0,
-    "stain":       0.6,
-    "mark":        0.5,
-    "spot":        0.3,
+    "tear": 1.0,
+    "chip": 1.0,
+    "stain": 0.6,
+    "mark": 0.5,
+    "spot": 0.3,
     "annotations": 0.3,
-    "crease":      0.3,
-    "nick":        0.3,
-    "label":       0.0,
-    "barcode":     0.0,
+    "crease": 0.3,
+    "nick": 0.3,
+    "label": 0.0,
+    "barcode": 0.0,
 }
 
 
@@ -67,7 +67,9 @@ def _score_predictions(predictions: list[dict[str, Any]]) -> tuple[float, float]
 
 
 @router.post("/condition", response_model=ConditionResponse)
-async def analyze_condition(body: ConditionRequest, request: Request) -> ConditionResponse:
+async def analyze_condition(
+    body: ConditionRequest, request: Request
+) -> ConditionResponse:
     """Classify the physical condition of a used textbook."""
     api_key = os.getenv("ROBOFLOW_API_KEY", "")
     model_endpoint = os.getenv(
@@ -86,7 +88,7 @@ async def analyze_condition(body: ConditionRequest, request: Request) -> Conditi
 
     images_base64 = body.images_base64 or []
     image_urls = body.image_urls or []
-    
+
     # We need base64 for Roboflow API
     all_b64: list[str] = list(images_base64)
     for url in image_urls:
@@ -126,7 +128,9 @@ async def analyze_condition(body: ConditionRequest, request: Request) -> Conditi
             data = resp.json()
         except httpx.HTTPError as exc:
             logger.error("Roboflow inference failed: %s", exc)
-            raise HTTPException(status_code=502, detail="AI inference unavailable") from exc
+            raise HTTPException(
+                status_code=502, detail="AI inference unavailable"
+            ) from exc
 
         defect, conf = _score_predictions(data.get("predictions", []))
         per_image_defect.append(defect)

@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, model_validator
 
 # ── Request schemas ────────────────────────────────────────────────────────────
 
+
 class MetadataRequest(BaseModel):
     """One or more book photos as base64 strings OR public URLs."""
 
@@ -18,7 +19,9 @@ class MetadataRequest(BaseModel):
     @model_validator(mode="after")
     def check_at_least_one_source(self) -> MetadataRequest:
         if not self.images_base64 and not self.image_urls:
-            raise ValueError("At least one of images_base64 or image_urls must be provided")
+            raise ValueError(
+                "At least one of images_base64 or image_urls must be provided"
+            )
         return self
 
 
@@ -35,11 +38,14 @@ class ConditionRequest(BaseModel):
     @model_validator(mode="after")
     def check_at_least_one_source(self) -> ConditionRequest:
         if not self.images_base64 and not self.image_urls:
-            raise ValueError("At least one of images_base64 or image_urls must be provided")
+            raise ValueError(
+                "At least one of images_base64 or image_urls must be provided"
+            )
         return self
 
 
 # ── Response schemas ───────────────────────────────────────────────────────────
+
 
 class MetadataResponse(BaseModel):
     title: str | None = None
