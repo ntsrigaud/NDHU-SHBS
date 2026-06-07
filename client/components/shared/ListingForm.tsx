@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -64,6 +65,22 @@ export default function ListingForm({
       description: defaultValues?.description ?? '',
     },
   });
+
+  // Re-sync form values when defaultValues change (important for AI async updates)
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset({
+        title: defaultValues.title ?? '',
+        author: defaultValues.author ?? '',
+        price: defaultValues.price ?? 0,
+        condition: defaultValues.condition ?? 'good',
+        isbn: defaultValues.isbn ?? '',
+        course_code: defaultValues.course_code ?? '',
+        department: defaultValues.department ?? '',
+        description: defaultValues.description ?? '',
+      });
+    }
+  }, [defaultValues, form]);
 
   function handleSubmit(values: ListingFormValues) {
     onSubmit({
