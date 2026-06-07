@@ -70,10 +70,18 @@ def _score_predictions(predictions: list[dict[str, Any]]) -> tuple[float, float]
 async def analyze_condition(body: ConditionRequest, request: Request) -> ConditionResponse:
     """Classify the physical condition of a used textbook."""
     api_key = os.getenv("ROBOFLOW_API_KEY", "")
-    endpoint = os.getenv(
+    model_endpoint = os.getenv(
         "MODEL_ENDPOINT",
-        "https://detect.roboflow.com/book-defect-detection/10",
+        "book-defect-detection/10",
     )
+
+    # Ensure the endpoint is a full URL. If it's just "model/version",
+    # prepend the Roboflow base URL.
+    if model_endpoint.startswith("http"):
+        endpoint = model_endpoint
+    else:
+        endpoint = f"https://detect.roboflow.com/{model_endpoint.lstrip('/')}"
+
     client: httpx.AsyncClient = request.app.state.http_client
 
     images_base64 = body.images_base64 or []
