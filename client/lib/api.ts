@@ -463,15 +463,17 @@ export const cartApi = {
 };
 
 export const messagesApi = {
-  async getMessages(listingId: string): Promise<Message[]> {
+  async getMessages(listingId: string, otherUserId?: string): Promise<Message[]> {
     const messages = await executeApiRequest((apiClient) =>
-      apiClient.listings.getMessages(listingId)
+      apiClient.listings.getMessages(listingId, {
+        query: { other_user_id: otherUserId },
+      })
     );
     return messages.map(toMessage);
   },
-  async sendMessage(listingId: string, body: string): Promise<Message> {
+  async sendMessage(listingId: string, body: string, receiverId?: string): Promise<Message> {
     const message = await executeApiRequest((apiClient) =>
-      apiClient.listings.sendMessage(listingId, { body })
+      apiClient.listings.sendMessage(listingId, { body, receiver_id: receiverId as any })
     );
     return toMessage(message);
   },
