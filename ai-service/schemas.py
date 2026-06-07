@@ -6,18 +6,24 @@ from pydantic import BaseModel, Field
 # ── Request schemas ────────────────────────────────────────────────────────────
 
 class MetadataRequest(BaseModel):
-    """One or more book photos (cover, back, pages) as base64-encoded strings."""
+    """One or more book photos as base64 strings OR public URLs."""
 
-    images_base64: list[str] = Field(
-        ..., min_length=1, max_length=10, description="Base64-encoded book photo(s)"
+    images_base64: list[str] | None = Field(
+        None, max_length=10, description="Base64-encoded book photo(s)"
+    )
+    image_urls: list[str] | None = Field(
+        None, max_length=10, description="Publicly accessible image URL(s)"
     )
 
 
 class ConditionRequest(BaseModel):
     """Condition classification request; one or more cover photos."""
 
-    images_base64: list[str] = Field(
-        ..., min_length=1, max_length=10, description="Base64-encoded book photo(s)"
+    images_base64: list[str] | None = Field(
+        None, max_length=10, description="Base64-encoded book photo(s)"
+    )
+    image_urls: list[str] | None = Field(
+        None, max_length=10, description="Publicly accessible image URL(s)"
     )
 
 

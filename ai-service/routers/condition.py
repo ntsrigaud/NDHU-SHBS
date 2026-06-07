@@ -17,6 +17,7 @@ Scoring:
 
 from __future__ import annotations
 
+import base64
 import logging
 import os
 from typing import Any
@@ -75,10 +76,27 @@ async def analyze_condition(body: ConditionRequest, request: Request) -> Conditi
     )
     client: httpx.AsyncClient = request.app.state.http_client
 
+    images_base64 = body.images_base64 or []
+    image_urls = body.image_urls or []
+    
+    # We need base64 for Roboflow API
+    all_b64: list[str] = list(images_base64)
+    for url in image_urls:
+        try:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            # Convert bytes to base64
+            all_b64.append(base64.b64encode(resp.content).decode("utf-8"))
+        except httpx.HTTPError as exc:
+            logger.warning("Could not download image from %s: %s", url, exc)
+
+    if not all_b64:
+        raise HTTPException(status_code=400, detail="No valid images provided")
+
     per_image_defect: list[float] = []
     per_image_confidence: list[float] = []
 
-    for image_b64 in body.images_base64:
+    for image_b64 in all_b64:
         # Roboflow's hosted API wants the raw base64 only. Strip a data-URI
         # prefix (e.g. "data:image/jpeg;base64,") if the caller included one,
         # plus any surrounding whitespace/newlines — otherwise Roboflow 400s.
