@@ -129,3 +129,24 @@ def test_roboflow_http_error_returns_502(client: TestClient, mock_http_client: A
 
     assert resp.status_code == 502
     assert resp.json()["detail"] == "AI inference unavailable"
+
+
+def test_condition_via_image_url(client: TestClient, mock_http_client: AsyncMock) -> None:
+    # 1. Mock image download
+    image_resp = MagicMock()
+    image_resp.content = b"fake-image-bytes"
+    image_resp.status_code = 200
+    image_resp.raise_for_status = MagicMock()
+    
+    mock_http_client.get.return_value = image_resp
+    
+    # 2. Mock Roboflow inference
+    mock_http_client.post.return_value = _mock_response([])
+
+    resp = client.post("/analyze/condition", json={"image_urls": ["http://example.com/book.jpg"]})
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["condition"] == "good"
+    assert mock_http_client.get.called
+    assert mock_http_client.post.called
