@@ -29,7 +29,7 @@ func TestAIService_AnalyzeMetadata(t *testing.T) {
 		title := "Test Book"
 		author := "Test Author"
 		isbn := "1234567890123"
-		
+
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path != "/analyze/metadata" {
 				t.Errorf("unexpected path: %s", r.URL.Path)
@@ -114,7 +114,7 @@ func TestAIService_AnalyzeCondition(t *testing.T) {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
-	
+
 	t.Run("network error", func(t *testing.T) {
 		svc := NewAIService("http://invalid-url-that-does-not-exist.local")
 		_, err := svc.AnalyzeCondition([]string{"http://image.url"})

@@ -123,12 +123,12 @@ func (w *AIWorker) ProcessListing(id uuid.UUID) {
 	// 5. Create notification for seller.
 	var sellerID uuid.UUID
 	w.DB.Get(&sellerID, "SELECT seller_id FROM book_listings WHERE id = $1", id)
-	
+
 	payload, _ := json.Marshal(map[string]any{
 		"listing_id": id,
 		"message":    "AI has finished processing your book listing. Please review the extracted metadata.",
 	})
-	
+
 	_, err = tx.Exec(`
 		INSERT INTO notifications (user_id, type, payload)
 		VALUES ($1, 'listing_ai_ready', $2)`,
