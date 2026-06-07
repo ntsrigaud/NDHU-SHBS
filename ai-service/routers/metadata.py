@@ -61,6 +61,7 @@ _ocr_engine = None
 
 # ── Image / barcode helpers ─────────────────────────────────────────────────
 
+
 def _b64_to_bytes(image_b64: str) -> bytes | None:
     """Decode a base64 string (with optional data-URI prefix) to raw bytes."""
     if "," in image_b64 and image_b64.lstrip().startswith("data:"):
@@ -91,6 +92,7 @@ def _decode_isbn(image_b64: str) -> str | None:
 
 
 # ── OCR ─────────────────────────────────────────────────────────────────────
+
 
 def _get_ocr_engine():
     """Return the shared RapidOCR engine, creating it on first use."""
@@ -127,6 +129,7 @@ def _run_ocr(image_bytes: bytes) -> list[str]:
 
 
 # ── Catalog lookups (by exact ISBN) ─────────────────────────────────────────
+
 
 async def _lookup_openlibrary(client: httpx.AsyncClient, isbn: str) -> BookInfo | None:
     """Look an exact ISBN up in OpenLibrary. Returns (title, author) or None."""
@@ -168,6 +171,7 @@ async def _lookup_google_books(client: httpx.AsyncClient, isbn: str) -> BookInfo
 
 
 # ── Catalog searches (by free-text OCR query) ───────────────────────────────
+
 
 async def _search_openlibrary(
     client: httpx.AsyncClient, params: dict[str, str | int], limit: int = 10
@@ -214,8 +218,12 @@ async def _search_google_books(
         info = item.get("volumeInfo", {})
         authors = info.get("authors")
         ids = info.get("industryIdentifiers", [])
-        isbn13 = next((i["identifier"] for i in ids if i.get("type") == "ISBN_13"), None)
-        hits.append((info.get("title"), ", ".join(authors) if authors else None, isbn13))
+        isbn13 = next(
+            (i["identifier"] for i in ids if i.get("type") == "ISBN_13"), None
+        )
+        hits.append(
+            (info.get("title"), ", ".join(authors) if authors else None, isbn13)
+        )
     return hits
 
 
@@ -230,8 +238,21 @@ _STOPWORDS = frozenset(
 # only — they are still kept in the OCR token set used for relevance matching.
 _EDITION_NOISE = frozenset(
     {
-        "edition", "ed", "first", "second", "third", "fourth", "fifth", "sixth",
-        "revised", "updated", "expanded", "reprint", "reprinted", "volume", "vol",
+        "edition",
+        "ed",
+        "first",
+        "second",
+        "third",
+        "fourth",
+        "fifth",
+        "sixth",
+        "revised",
+        "updated",
+        "expanded",
+        "reprint",
+        "reprinted",
+        "volume",
+        "vol",
     }
 )
 # Publisher / imprint words. These show up large on covers (e.g. "O'Reilly")
@@ -239,9 +260,25 @@ _EDITION_NOISE = frozenset(
 # drives the catalog's conjunctive search to zero hits.
 _PUBLISHER_NOISE = frozenset(
     {
-        "oreilly", "reilly", "press", "publishing", "publications", "publisher",
-        "manning", "packt", "apress", "wiley", "springer", "pearson", "prentice",
-        "mcgraw", "addison", "wesley", "wrox", "sams", "starch",
+        "oreilly",
+        "reilly",
+        "press",
+        "publishing",
+        "publications",
+        "publisher",
+        "manning",
+        "packt",
+        "apress",
+        "wiley",
+        "springer",
+        "pearson",
+        "prentice",
+        "mcgraw",
+        "addison",
+        "wesley",
+        "wrox",
+        "sams",
+        "starch",
     }
 )
 # A token longer than this is almost always two OCR words merged together
@@ -308,6 +345,7 @@ def _best_candidate(
 
 # ── Endpoint ────────────────────────────────────────────────────────────────
 
+
 async def _to_bytes(
     client: httpx.AsyncClient, b64: str | None = None, url: str | None = None
 ) -> bytes | None:
@@ -345,15 +383,23 @@ async def analyze_metadata(body: MetadataRequest, request: Request) -> MetadataR
             all_raw.append(raw)
             isbn = _decode_isbn(b64)
             if isbn:
-                logger.info("metadata: BARCODE path — ISBN %s decoded from b64 image %d", isbn, idx)
+                logger.info(
+                    "metadata: BARCODE path — ISBN %s decoded from b64 image %d",
+                    isbn,
+                    idx,
+                )
                 result = await _lookup_openlibrary(client, isbn)
                 if result is None:
                     result = await _lookup_google_books(client, isbn)
                 if result:
                     title, author = result
                     logger.info("metadata: resolved %r via ISBN lookup", title)
-                    return MetadataResponse(title=title, author=author, isbn=isbn, confidence=0.95)
-                return MetadataResponse(title=None, author=None, isbn=isbn, confidence=0.5)
+                    return MetadataResponse(
+                        title=title, author=author, isbn=isbn, confidence=0.95
+                    )
+                return MetadataResponse(
+                    title=None, author=None, isbn=isbn, confidence=0.5
+                )
 
     # Process URL images
     for idx, url in enumerate(image_urls):
@@ -368,22 +414,32 @@ async def analyze_metadata(body: MetadataRequest, request: Request) -> MetadataR
                 image.load()
                 for result in zxingcpp.read_barcodes(image):
                     text = result.text
-                    if result.valid and len(text) == 13 and text.startswith(("978", "979")):
+                    if (
+                        result.valid
+                        and len(text) == 13
+                        and text.startswith(("978", "979"))
+                    ):
                         isbn = text
                         break
             except Exception:
                 pass
 
             if isbn:
-                logger.info("metadata: BARCODE path — ISBN %s decoded from URL %s", isbn, url)
+                logger.info(
+                    "metadata: BARCODE path — ISBN %s decoded from URL %s", isbn, url
+                )
                 result = await _lookup_openlibrary(client, isbn)
                 if result is None:
                     result = await _lookup_google_books(client, isbn)
                 if result:
                     title, author = result
                     logger.info("metadata: resolved %r via ISBN lookup", title)
-                    return MetadataResponse(title=title, author=author, isbn=isbn, confidence=0.95)
-                return MetadataResponse(title=None, author=None, isbn=isbn, confidence=0.5)
+                    return MetadataResponse(
+                        title=title, author=author, isbn=isbn, confidence=0.95
+                    )
+                return MetadataResponse(
+                    title=None, author=None, isbn=isbn, confidence=0.5
+                )
 
     logger.info("metadata: no barcode in any image — using OCR fallback")
 
@@ -404,7 +460,7 @@ async def analyze_metadata(body: MetadataRequest, request: Request) -> MetadataR
         return MetadataResponse(title=None, author=None, isbn=None, confidence=0.0)
 
     short_query = " ".join(words[:3])  # core title — survives conjunctive search
-    full_query = " ".join(words[:8])   # + author/publisher words to disambiguate
+    full_query = " ".join(words[:8])  # + author/publisher words to disambiguate
 
     # The catalog's search is conjunctive, so a long noisy query returns nothing.
     # Try a short title-field query first, then progressively broader fallbacks.
@@ -420,7 +476,10 @@ async def analyze_metadata(body: MetadataRequest, request: Request) -> MetadataR
         best = _best_candidate(candidates, ocr_tokens)
         logger.info(
             "metadata: %s search %r -> %d candidate(s), accepted=%r",
-            label, args[0], len(candidates), best[0] if best else None,
+            label,
+            args[0],
+            len(candidates),
+            best[0] if best else None,
         )
         if best is not None:
             title, author, isbn = best
