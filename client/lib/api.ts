@@ -207,6 +207,8 @@ function toBookListing(listing: ModelListingWithImages): BookListing {
     status: (listing.status as BookListing['status']) ?? 'active',
     description: listing.description ?? null,
     ai_confidence: toNullableNumber(listing.ai_confidence),
+    condition_score: toNullableNumber(listing.condition_score),
+    ai_processed: !!listing.ai_processed,
     created_at: listing.created_at ?? '',
     updated_at: listing.updated_at ?? '',
     images: (listing.image_urls ?? []).map((cdnUrl, index) => ({
