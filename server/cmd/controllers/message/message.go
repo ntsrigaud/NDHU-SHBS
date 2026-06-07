@@ -85,12 +85,12 @@ func GetMessages(db *sqlx.DB, c *fiber.Ctx) error {
 // SendMessage handles POST /listings/:listingId/messages.
 //
 // @Summary         Send a message about a listing
-// @Description     Sends a message from the authenticated user to the listing seller. Creates a notification for the receiver.
+// @Description     Sends a message from the authenticated user. If the sender is the seller, they must provide the receiver_id (the buyer). If the sender is a buyer, the message is sent to the seller.
 // @Tags            Messages
 // @Accept          json
 // @Produce         json
 // @Param           listingId path string true "Listing ID"
-// @Param           body body model.SwaggerSendMessageRequest true "Message body"
+// @Param           body body model.SwaggerSendMessageRequest true "Message body and optional receiver_id"
 // @Success         201 {object} model.MessageResponse
 // @Failure         400 {object} model.SwaggerErrorResponse
 // @Failure         401 {object} model.SwaggerErrorResponse
@@ -124,13 +124,36 @@ func SendMessage(db *sqlx.DB, c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "message too long (max 2000 chars)")
 	}
 
-	var sellerID uuid.UUID
-	if err := db.Get(&sellerID, `SELECT seller_id FROM book_listings WHERE id = $1`, listingID); err != nil {
+	var listingInfo struct {
+		Title    string    `db:"title"`
+		SellerID uuid.UUID `db:"seller_id"`
+	}
+	if err := db.Get(&listingInfo, `SELECT title, seller_id FROM book_listings WHERE id = $1`, listingID); err != nil {
 		return fiber.NewError(fiber.StatusNotFound, "listing not found")
 	}
 
-	if userID == sellerID {
-		return fiber.NewError(fiber.StatusBadRequest, "sellers cannot initiate messages; wait for a buyer to contact you")
+	receiverID := listingInfo.SellerID
+	if userID == listingInfo.SellerID {
+		if req.ReceiverID == uuid.Nil {
+			return fiber.NewError(fiber.StatusBadRequest, "receiver_id is required for the seller")
+		}
+		receiverID = req.ReceiverID
+
+		// Verify that there is at least one message from the buyer to this seller for this listing
+		// to prevent sellers from spamming random users.
+		var exists bool
+		err := db.Get(&exists, `
+			SELECT EXISTS(
+				SELECT 1 FROM messages
+				WHERE listing_id = $1 AND sender_id = $2 AND receiver_id = $3
+			)`, listingID, receiverID, userID)
+		if err != nil || !exists {
+			return fiber.NewError(fiber.StatusBadRequest, "sellers can only reply to existing conversations")
+		}
+	} else {
+		// If user is not the seller, they are the buyer sending to the seller.
+		// Ensure they don't try to send to someone else via req.ReceiverID (optional: just ignore it)
+		receiverID = listingInfo.SellerID
 	}
 
 	var msg model.Message
@@ -138,13 +161,13 @@ func SendMessage(db *sqlx.DB, c *fiber.Ctx) error {
 		INSERT INTO messages (id, listing_id, sender_id, receiver_id, body)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING *`,
-		uuid.New(), listingID, userID, sellerID, req.Body,
+		uuid.New(), listingID, userID, receiverID, req.Body,
 	).StructScan(&msg); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not send message")
 	}
 
-	payload := fmt.Sprintf(`{"listing_id":%q,"sender_id":%q,"body_preview":%q}`,
-		msg.ListingID, msg.SenderID, truncate(msg.Body, 40))
+	payload := fmt.Sprintf(`{"listing_id":%q,"listing_title":%q,"sender_id":%q,"body_preview":%q}`,
+		msg.ListingID, listingInfo.Title, msg.SenderID, truncate(msg.Body, 40))
 	_, _ = db.Exec(`
 		INSERT INTO notifications (id, user_id, type, payload)
 		VALUES ($1, $2, $3, $4)`,
