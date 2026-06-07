@@ -95,6 +95,29 @@ func TestLogger_LogsAndPassesThrough(t *testing.T) {
 	}
 }
 
+func TestLogger_ErrorHandling(t *testing.T) {
+	app := newApp()
+	app.Use(middleware.Logger())
+
+	// Case 1: fiber.Error
+	app.Get("/fiber-error", func(c *fiber.Ctx) error {
+		return fiber.NewError(fiber.StatusForbidden, "forbidden")
+	})
+	resp := do(t, app, httptest.NewRequest(http.MethodGet, "/fiber-error", nil))
+	if resp.StatusCode != http.StatusForbidden {
+		t.Errorf("expected 403, got %d", resp.StatusCode)
+	}
+
+	// Case 2: Generic error
+	app.Get("/generic-error", func(c *fiber.Ctx) error {
+		return errors.New("boom")
+	})
+	resp = do(t, app, httptest.NewRequest(http.MethodGet, "/generic-error", nil))
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Errorf("expected 500, got %d", resp.StatusCode)
+	}
+}
+
 // ── Compressor ────────────────────────────────────────────────────────────────
 
 func TestCompressor_ReturnsOK(t *testing.T) {
@@ -153,6 +176,61 @@ func TestCorsHandler_AllowsVercelPreview(t *testing.T) {
 	resp := do(t, app, req)
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected 200, got %d", resp.StatusCode)
+	}
+}
+
+func TestCorsHandler_MultipleOrigins(t *testing.T) {
+	t.Setenv("FRONTEND_BASE_URL", "http://localhost:3000,https://example.com")
+	app := newApp()
+	app.Use(middleware.CorsHandler())
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	origins := []string{"http://localhost:3000", "https://example.com", "http://127.0.0.1:4000"}
+	for _, origin := range origins {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("Origin", origin)
+		resp := do(t, app, req)
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("expected 200 for origin %s, got %d", origin, resp.StatusCode)
+		}
+	}
+}
+
+func TestCorsHandler_DeniesUnknownOrigin(t *testing.T) {
+	t.Setenv("FRONTEND_BASE_URL", "https://example.com")
+	app := newApp()
+	app.Use(middleware.CorsHandler())
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Origin", "https://malicious.com")
+	resp := do(t, app, req)
+	// CORS middleware by default just doesn't set the CORS headers if origin is not allowed.
+	// Fiber's CORS middleware might still return 200 but without the Access-Control-Allow-Origin header.
+	if resp.Header.Get("Access-Control-Allow-Origin") != "" {
+		t.Errorf("expected empty Access-Control-Allow-Origin for unknown origin, got %s", resp.Header.Get("Access-Control-Allow-Origin"))
+	}
+}
+
+func TestPrivateNetworkAccessHandler(t *testing.T) {
+	app := newApp()
+	app.Use(middleware.PrivateNetworkAccessHandler())
+	app.Options("/", func(c *fiber.Ctx) error { return c.SendStatus(fiber.StatusNoContent) })
+
+	// Case 1: OPTIONS request with PNA header
+	req := httptest.NewRequest(http.MethodOptions, "/", nil)
+	req.Header.Set("Access-Control-Request-Private-Network", "true")
+	resp := do(t, app, req)
+	if resp.Header.Get("Access-Control-Allow-Private-Network") != "true" {
+		t.Error("expected Access-Control-Allow-Private-Network header to be true")
+	}
+
+	// Case 2: GET request with PNA header (should NOT set the header)
+	req = httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Access-Control-Request-Private-Network", "true")
+	resp = do(t, app, req)
+	if resp.Header.Get("Access-Control-Allow-Private-Network") != "" {
+		t.Error("expected Access-Control-Allow-Private-Network header to be empty for GET")
 	}
 }
 
@@ -338,5 +416,40 @@ func TestRateLimiter_LocalhostBypassed(t *testing.T) {
 	resp := do(t, app, httptest.NewRequest(http.MethodGet, "/", nil))
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusTooManyRequests {
 		t.Errorf("unexpected status %d", resp.StatusCode)
+	}
+}
+
+func TestRateLimiter_CustomKeyGenerator(t *testing.T) {
+	app := newApp()
+	app.Use(middleware.RateLimiter())
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Forwarded-For", "1.2.3.4")
+	resp := do(t, app, req)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected 200, got %d", resp.StatusCode)
+	}
+}
+
+func TestRateLimiter_LimitReached(t *testing.T) {
+	app := newApp()
+	// We can't easily change the config of the middleware returned by RateLimiter()
+	// without modifying the production code to accept a config, but we can
+	// just blast it with requests.
+	app.Use(middleware.RateLimiter())
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	// The limit is 100.
+	for i := 0; i < 100; i++ {
+		resp := do(t, app, httptest.NewRequest(http.MethodGet, "/", nil))
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("request %d failed: expected 200, got %d", i, resp.StatusCode)
+		}
+	}
+
+	resp := do(t, app, httptest.NewRequest(http.MethodGet, "/", nil))
+	if resp.StatusCode != http.StatusTooManyRequests {
+		t.Errorf("expected 429, got %d", resp.StatusCode)
 	}
 }
