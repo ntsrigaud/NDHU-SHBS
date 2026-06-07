@@ -196,6 +196,22 @@ func TestCorsHandler_MultipleOrigins(t *testing.T) {
 	}
 }
 
+func TestCorsHandler_DeniesUnknownOrigin(t *testing.T) {
+	t.Setenv("FRONTEND_BASE_URL", "https://example.com")
+	app := newApp()
+	app.Use(middleware.CorsHandler())
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Origin", "https://malicious.com")
+	resp := do(t, app, req)
+	// CORS middleware by default just doesn't set the CORS headers if origin is not allowed.
+	// Fiber's CORS middleware might still return 200 but without the Access-Control-Allow-Origin header.
+	if resp.Header.Get("Access-Control-Allow-Origin") != "" {
+		t.Errorf("expected empty Access-Control-Allow-Origin for unknown origin, got %s", resp.Header.Get("Access-Control-Allow-Origin"))
+	}
+}
+
 // ── HealthChecks ──────────────────────────────────────────────────────────────
 
 // fakeDB implements the ping interface used by services.Database.
