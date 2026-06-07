@@ -77,7 +77,12 @@
 
 @layer utilities {
   .gradient-hero {
-    background: linear-gradient(135deg, hsl(152 52% 20%) 0%, hsl(165 45% 30%) 60%, hsl(152 40% 38%) 100%);
+    background: linear-gradient(
+      135deg,
+      hsl(152 52% 20%) 0%,
+      hsl(165 45% 30%) 60%,
+      hsl(152 40% 38%) 100%
+    );
   }
   .gradient-card-hover {
     background: linear-gradient(135deg, hsl(152 48% 28% / 0.06) 0%, hsl(40 88% 46% / 0.04) 100%);

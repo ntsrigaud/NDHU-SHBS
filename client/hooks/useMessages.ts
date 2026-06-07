@@ -17,8 +17,7 @@ export function useSendMessage(listingId: string, receiverId?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: string) => messagesApi.sendMessage(listingId, body, receiverId),
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: ['messages', listingId, receiverId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['messages', listingId, receiverId] }),
   });
 }
 

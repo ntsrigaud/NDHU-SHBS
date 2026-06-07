@@ -69,7 +69,7 @@ export default function BookDetailPage() {
         price: listing!.price,
         imageUrl: listing!.images?.[0]?.cdn_url ?? '',
         sellerName,
-      }),
+      })
     );
     toast.success('Added to cart');
   }
@@ -124,11 +124,7 @@ export default function BookDetailPage() {
 
           {/* Action buttons */}
           <div className="flex gap-3 pt-2">
-            <Button
-              className="flex-1"
-              onClick={handleAddToCart}
-              disabled={isSold || alreadyInCart}
-            >
+            <Button className="flex-1" onClick={handleAddToCart} disabled={isSold || alreadyInCart}>
               <ShoppingCart className="mr-2 h-4 w-4" />
               {isSold ? 'Sold' : alreadyInCart ? 'In cart' : 'Add to cart'}
             </Button>
@@ -157,7 +153,10 @@ export default function BookDetailPage() {
           {isOwnListing && (
             <div className="rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground">
               This is your listing.{' '}
-              <Link href="/messages" className="font-medium text-primary underline underline-offset-4">
+              <Link
+                href="/messages"
+                className="font-medium text-primary underline underline-offset-4"
+              >
                 View messages from buyers →
               </Link>
             </div>

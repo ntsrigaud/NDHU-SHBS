@@ -46,10 +46,17 @@ export default function InlineChatPanel({ listingId, sellerName }: Props) {
           </div>
           <div>
             <p className="text-sm font-semibold">Message {sellerName}</p>
-            <p className="text-xs text-muted-foreground">Ask about condition, availability, or price</p>
+            <p className="text-xs text-muted-foreground">
+              Ask about condition, availability, or price
+            </p>
           </div>
         </div>
-        <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
+        <ChevronDown
+          className={cn(
+            'h-4 w-4 text-muted-foreground transition-transform duration-200',
+            open && 'rotate-180'
+          )}
+        />
       </button>
 
       {/* Expandable thread */}
@@ -57,9 +64,13 @@ export default function InlineChatPanel({ listingId, sellerName }: Props) {
         <div className="border-t">
           {/* Messages */}
           <div className="flex h-64 flex-col gap-3 overflow-y-auto p-4">
-            {isLoading && Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className={cn('h-9 w-2/3 rounded-2xl', i % 2 !== 0 && 'ml-auto')} />
-            ))}
+            {isLoading &&
+              Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton
+                  key={i}
+                  className={cn('h-9 w-2/3 rounded-2xl', i % 2 !== 0 && 'ml-auto')}
+                />
+              ))}
 
             {!isLoading && messages?.length === 0 && (
               <div className="flex flex-1 flex-col items-center justify-center text-center">
@@ -73,13 +84,25 @@ export default function InlineChatPanel({ listingId, sellerName }: Props) {
               const isMine = msg.sender_id === currentUser?.id;
               return (
                 <div key={msg.id} className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
-                  <div className={cn(
-                    'max-w-[80%] rounded-2xl px-3.5 py-2 text-sm',
-                    isMine ? 'rounded-br-sm bg-primary text-primary-foreground' : 'rounded-bl-sm bg-muted',
-                  )}>
+                  <div
+                    className={cn(
+                      'max-w-[80%] rounded-2xl px-3.5 py-2 text-sm',
+                      isMine
+                        ? 'rounded-br-sm bg-primary text-primary-foreground'
+                        : 'rounded-bl-sm bg-muted'
+                    )}
+                  >
                     <p>{msg.body}</p>
-                    <p className={cn('mt-0.5 text-right text-[10px]', isMine ? 'text-primary-foreground/60' : 'text-muted-foreground')}>
-                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <p
+                      className={cn(
+                        'mt-0.5 text-right text-[10px]',
+                        isMine ? 'text-primary-foreground/60' : 'text-muted-foreground'
+                      )}
+                    >
+                      {new Date(msg.created_at).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </p>
                   </div>
                 </div>

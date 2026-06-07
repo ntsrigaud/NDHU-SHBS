@@ -50,7 +50,12 @@ export default function NotificationBell() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="relative outline-none focus-visible:ring-2 focus-visible:ring-white/50">
-          <Button variant="ghost" size="icon" className="text-white/80 hover:bg-white/10 hover:text-white" asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white/80 hover:bg-white/10 hover:text-white"
+            asChild
+          >
             <span>
               <Bell className="h-5 w-5" />
             </span>

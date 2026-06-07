@@ -4,7 +4,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       {/* Left panel — brand */}
       <div
         className="relative hidden flex-col items-center justify-center p-12 lg:flex lg:w-5/12"
-        style={{ background: 'linear-gradient(160deg, hsl(152 52% 18%) 0%, hsl(165 45% 28%) 100%)' }}
+        style={{
+          background: 'linear-gradient(160deg, hsl(152 52% 18%) 0%, hsl(165 45% 28%) 100%)',
+        }}
       >
         {/* dot pattern */}
         <div
@@ -19,11 +21,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             東
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight">二手書市集</h1>
-          <p className="mt-2 text-base font-medium text-white/70">
-            National Dong Hwa University
-          </p>
+          <p className="mt-2 text-base font-medium text-white/70">National Dong Hwa University</p>
           <p className="mt-6 max-w-xs text-sm leading-relaxed text-white/60">
-            Campus-exclusive marketplace for NDHU students to buy and sell used textbooks at fair prices.
+            Campus-exclusive marketplace for NDHU students to buy and sell used textbooks at fair
+            prices.
           </p>
         </div>
       </div>

@@ -39,7 +39,10 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full shadow-md" style={{ background: 'linear-gradient(135deg, hsl(152 52% 20%) 0%, hsl(158 48% 26%) 100%)' }}>
+    <header
+      className="sticky top-0 z-50 w-full shadow-md"
+      style={{ background: 'linear-gradient(135deg, hsl(152 52% 20%) 0%, hsl(158 48% 26%) 100%)' }}
+    >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Brand */}
         <Link href="/" className="group flex items-center gap-3">
@@ -48,7 +51,9 @@ export default function Navbar() {
           </div>
           <div className="leading-tight">
             <p className="text-[15px] font-bold tracking-wide text-white">NDHU 二手書市集</p>
-            <p className="text-[10px] font-medium tracking-wider text-white/60 uppercase">Second-Hand Book Store</p>
+            <p className="text-[10px] font-medium uppercase tracking-wider text-white/60">
+              Second-Hand Book Store
+            </p>
           </div>
         </Link>
 
@@ -58,7 +63,11 @@ export default function Navbar() {
               <NotificationBell />
 
               <Link href="/messages" className="relative">
-                <Button variant="ghost" size="icon" className="text-white/80 hover:bg-white/10 hover:text-white">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white/80 hover:bg-white/10 hover:text-white"
+                >
                   <MessageSquare className="h-5 w-5" />
                   {(unread?.count ?? 0) > 0 && (
                     <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white shadow">
@@ -69,7 +78,11 @@ export default function Navbar() {
               </Link>
 
               <Link href="/cart" className="relative">
-                <Button variant="ghost" size="icon" className="text-white/80 hover:bg-white/10 hover:text-white">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-white/80 hover:bg-white/10 hover:text-white"
+                >
                   <ShoppingCart className="h-5 w-5" />
                   {cartCount > 0 && (
                     <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white shadow">
@@ -83,14 +96,14 @@ export default function Navbar() {
                 <DropdownMenuTrigger asChild>
                   <button className="ml-1 rounded-full outline-none transition-transform hover:scale-105 focus-visible:ring-2 focus-visible:ring-white/50">
                     <Avatar className="h-8 w-8 ring-2 ring-white/30">
-                      <AvatarFallback className="bg-accent text-white text-sm font-bold">
+                      <AvatarFallback className="bg-accent text-sm font-bold text-white">
                         {user.name[0]?.toUpperCase() ?? 'U'}
                       </AvatarFallback>
                     </Avatar>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52 shadow-xl">
-                  <div className="px-3 py-2.5 border-b">
+                  <div className="border-b px-3 py-2.5">
                     <p className="text-sm font-semibold">{user.name}</p>
                     <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                   </div>
@@ -104,7 +117,10 @@ export default function Navbar() {
                     <Link href="/messages">Messages</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-destructive focus:text-destructive"
+                  >
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -112,10 +128,17 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Button variant="ghost" className="text-white/80 hover:bg-white/10 hover:text-white" asChild>
+              <Button
+                variant="ghost"
+                className="text-white/80 hover:bg-white/10 hover:text-white"
+                asChild
+              >
                 <Link href="/login">Login</Link>
               </Button>
-              <Button className="bg-accent hover:bg-accent/90 text-white font-semibold shadow-md" asChild>
+              <Button
+                className="bg-accent font-semibold text-white shadow-md hover:bg-accent/90"
+                asChild
+              >
                 <Link href="/register">Register</Link>
               </Button>
             </>
