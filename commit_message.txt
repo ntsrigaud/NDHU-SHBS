@@ -1,3 +1,0 @@
-chore(client): Update .env.example for API URL consistency
-
-This commit updates the `.env.example` file in the client directory to use `NEXT_PUBLIC_API_URL` instead of `NEXT_PUBLIC_API_BASE_URL`. This change aligns the environment variable name with its usage in the codebase for API endpoint configuration.
