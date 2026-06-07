@@ -1118,6 +1118,12 @@ const docTemplate = `{
                         "name": "listingId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Other User ID (required for sellers)",
+                        "name": "other_user_id",
+                        "in": "query"
                     }
                 ],
                 "responses": {

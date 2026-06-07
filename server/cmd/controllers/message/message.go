@@ -17,7 +17,8 @@ import (
 // @Description     Returns the conversation between the authenticated user and the other party for a given listing. Marks received messages as read.
 // @Tags            Messages
 // @Produce         json
-// @Param           listingId path string true "Listing ID"
+// @Param           listingId    path  string  true   "Listing ID"
+// @Param           other_user_id query string  false  "Other User ID (required for sellers)"
 // @Success         200 {array} model.MessageResponse
 // @Failure         400 {object} model.SwaggerErrorResponse
 // @Failure         401 {object} model.SwaggerErrorResponse

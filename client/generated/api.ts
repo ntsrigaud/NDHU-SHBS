@@ -847,10 +847,18 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/listings/{listingId}/messages
      * @secure
      */
-    getMessages: (listingId: string, params: RequestParams = {}) =>
+    getMessages: (
+      listingId: string,
+      query?: {
+        /** Other User ID (required for sellers) */
+        other_user_id?: string;
+      },
+      params: RequestParams = {}
+    ) =>
       this.request<ModelMessageResponse[], ModelSwaggerErrorResponse>({
         path: `/listings/${listingId}/messages`,
         method: 'GET',
+        query: query,
         secure: true,
         format: 'json',
         ...params,

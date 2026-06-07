@@ -987,6 +987,10 @@ paths:
         name: listingId
         required: true
         type: string
+      - description: Other User ID (required for sellers)
+        in: query
+        name: other_user_id
+        type: string
       produces:
       - application/json
       responses:
