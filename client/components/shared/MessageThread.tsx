@@ -11,14 +11,16 @@ import { Send } from 'lucide-react';
 
 interface Props {
   listingId: string;
+  /** Required if the current user is the seller */
+  otherUserId?: string;
   /** Name shown for the other party */
   otherUserName: string;
 }
 
-export default function MessageThread({ listingId, otherUserName }: Props) {
+export default function MessageThread({ listingId, otherUserId, otherUserName }: Props) {
   const currentUser = useAppSelector((s) => s.auth.user);
-  const { data: messages, isLoading } = useMessages(listingId);
-  const { mutate: send, isPending } = useSendMessage(listingId);
+  const { data: messages, isLoading } = useMessages(listingId, otherUserId);
+  const { mutate: send, isPending } = useSendMessage(listingId, otherUserId);
   const [draft, setDraft] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
