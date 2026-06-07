@@ -148,6 +148,9 @@ func TestCorsHandler_Wildcard_WhenNoEnv(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected 200, got %d", resp.StatusCode)
 	}
+	if resp.Header.Get("Access-Control-Expose-Headers") != "X-Total-Count" {
+		t.Errorf("expected Access-Control-Expose-Headers to be X-Total-Count, got %s", resp.Header.Get("Access-Control-Expose-Headers"))
+	}
 }
 
 func TestCorsHandler_AllowsKnownOrigin(t *testing.T) {
@@ -162,6 +165,9 @@ func TestCorsHandler_AllowsKnownOrigin(t *testing.T) {
 	resp := do(t, app, req)
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected 200, got %d", resp.StatusCode)
+	}
+	if resp.Header.Get("Access-Control-Expose-Headers") != "X-Total-Count" {
+		t.Errorf("expected Access-Control-Expose-Headers to be X-Total-Count, got %s", resp.Header.Get("Access-Control-Expose-Headers"))
 	}
 }
 
