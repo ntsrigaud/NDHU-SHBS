@@ -218,9 +218,8 @@ func createListing(t *testing.T, token string, title string) string {
 		t.Fatal(err)
 	}
 	assertStatus(t, res, http.StatusCreated)
-	var body map[string]any
-	decodeBody(t, res, &body)
-	l, _ := body["listing"].(map[string]any)
+	var l map[string]any
+	decodeBody(t, res, &l)
 	return l["id"].(string)
 }
 
@@ -236,9 +235,8 @@ func TestMessaging_Flow(t *testing.T) {
 	listingID := createListing(t, sellerToken, "Message Book")
 
 	// 1. Buyer sends message to Seller
-	res, err := testApp.Test(authReq("POST", "/api/v1/messages", map[string]string{
-		"listing_id": listingID,
-		"body":       "Hi, is this available?",
+	res, err := testApp.Test(authReq("POST", "/api/v1/listings/"+listingID+"/messages", map[string]string{
+		"body": "Hi, is this available?",
 	}, buyerToken), -1)
 	if err != nil {
 		t.Fatal(err)
@@ -246,27 +244,24 @@ func TestMessaging_Flow(t *testing.T) {
 	assertStatus(t, res, http.StatusCreated)
 
 	// 2. Seller lists messages (convo with Buyer)
-	res, err = testApp.Test(authReq("GET", "/api/v1/messages?listing_id="+listingID+"&other_user_id="+buyerID, nil, sellerToken), -1)
+	res, err = testApp.Test(authReq("GET", "/api/v1/listings/"+listingID+"/messages?other_user_id="+buyerID, nil, sellerToken), -1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assertStatus(t, res, http.StatusOK)
 
-	var listBody map[string]any
-	decodeBody(t, res, &listBody)
-	msgs, _ := listBody["messages"].([]any)
+	var msgs []map[string]any
+	decodeBody(t, res, &msgs)
 	if len(msgs) != 1 {
 		t.Fatalf("expected 1 message, got %d", len(msgs))
 	}
 
-	m, _ := msgs[0].(map[string]any)
-	if m["body"] != "Hi, is this available?" {
-		t.Fatalf("unexpected message body: %v", m["body"])
+	if msgs[0]["body"] != "Hi, is this available?" {
+		t.Fatalf("unexpected message body: %v", msgs[0]["body"])
 	}
 
 	// 3. Seller replies
-	res, err = testApp.Test(authReq("POST", "/api/v1/messages", map[string]string{
-		"listing_id":  listingID,
+	res, err = testApp.Test(authReq("POST", "/api/v1/listings/"+listingID+"/messages", map[string]any{
 		"receiver_id": buyerID,
 		"body":        "Yes, it is!",
 	}, sellerToken), -1)
@@ -276,13 +271,12 @@ func TestMessaging_Flow(t *testing.T) {
 	assertStatus(t, res, http.StatusCreated)
 
 	// 4. Buyer lists messages
-	res, err = testApp.Test(authReq("GET", "/api/v1/messages?listing_id="+listingID, nil, buyerToken), -1)
+	res, err = testApp.Test(authReq("GET", "/api/v1/listings/"+listingID+"/messages", nil, buyerToken), -1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assertStatus(t, res, http.StatusOK)
-	decodeBody(t, res, &listBody)
-	msgs, _ = listBody["messages"].([]any)
+	decodeBody(t, res, &msgs)
 	if len(msgs) != 2 {
 		t.Fatalf("expected 2 messages in convo, got %d", len(msgs))
 	}
@@ -293,9 +287,8 @@ func TestMessaging_Flow(t *testing.T) {
 		t.Fatal(err)
 	}
 	assertStatus(t, res, http.StatusOK)
-	var notifBody map[string]any
-	decodeBody(t, res, &notifBody)
-	notifs, _ := notifBody["notifications"].([]any)
+	var notifs []map[string]any
+	decodeBody(t, res, &notifs)
 	if len(notifs) == 0 {
 		t.Fatal("expected at least 1 notification for seller")
 	}

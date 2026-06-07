@@ -84,7 +84,8 @@ type SwaggerAddToCartRequest struct {
 // ── Message ──────────────────────────────────────────────────────────────────
 
 type SwaggerSendMessageRequest struct {
-	Body string `json:"body"`
+	Body       string    `json:"body"`
+	ReceiverID uuid.UUID `json:"receiver_id"`
 }
 
 // ── Image ────────────────────────────────────────────────────────────────────

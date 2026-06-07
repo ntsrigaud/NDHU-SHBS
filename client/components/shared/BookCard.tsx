@@ -39,9 +39,7 @@ export default function BookCard({ listing }: { listing: BookListing }) {
           <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{listing.author}</p>
 
           <div className="mt-2.5 flex items-center justify-between gap-2">
-            <span className="text-base font-bold text-accent">
-              NT${listing.price.toFixed(0)}
-            </span>
+            <span className="text-base font-bold text-accent">NT${listing.price.toFixed(0)}</span>
             {listing.department && (
               <span className="truncate rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-secondary-foreground">
                 {listing.department}

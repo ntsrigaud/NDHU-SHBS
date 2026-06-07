@@ -1118,6 +1118,12 @@ const docTemplate = `{
                         "name": "listingId",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Other User ID (required for sellers)",
+                        "name": "other_user_id",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1162,7 +1168,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Sends a message from the authenticated user to the listing seller. Creates a notification for the receiver.",
+                "description": "Sends a message from the authenticated user. If the sender is the seller, they must provide the receiver_id (the buyer). If the sender is a buyer, the message is sent to the seller.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1183,7 +1189,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Message body",
+                        "description": "Message body and optional receiver_id",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -2075,6 +2081,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "body": {
+                    "type": "string"
+                },
+                "receiver_id": {
                     "type": "string"
                 }
             }

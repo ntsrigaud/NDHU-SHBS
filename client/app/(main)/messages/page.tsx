@@ -32,8 +32,8 @@ export default function MessagesPage() {
         <div className="divide-y rounded-lg border">
           {conversations.map((conv) => (
             <Link
-              key={conv.listing_id}
-              href={`/messages/${conv.listing_id}`}
+              key={`${conv.listing_id}-${conv.other_user.id}`}
+              href={`/messages/${conv.listing_id}?userId=${conv.other_user.id}`}
               className="flex items-start gap-4 p-4 transition-colors hover:bg-muted/50"
             >
               <div className="min-w-0 flex-1">

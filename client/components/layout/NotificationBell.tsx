@@ -19,7 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const NOTIFICATION_LINKS: Record<string, (payload: Record<string, unknown>) => string> = {
-  new_message: (p) => `/messages/${p.listing_id}`,
+  new_message: (p) => `/messages/${p.listing_id}${p.sender_id ? `?userId=${p.sender_id}` : ''}`,
   order_confirmed: (_p) => `/orders`,
   listing_sold: (p) => `/my-listings/${p.listing_id}/edit`,
 };
@@ -50,7 +50,12 @@ export default function NotificationBell() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="relative outline-none focus-visible:ring-2 focus-visible:ring-white/50">
-          <Button variant="ghost" size="icon" className="text-white/80 hover:bg-white/10 hover:text-white" asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white/80 hover:bg-white/10 hover:text-white"
+            asChild
+          >
             <span>
               <Bell className="h-5 w-5" />
             </span>

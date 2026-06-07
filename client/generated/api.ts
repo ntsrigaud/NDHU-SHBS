@@ -147,6 +147,7 @@ export interface ModelSwaggerResendVerificationRequest {
 
 export interface ModelSwaggerSendMessageRequest {
   body?: string;
+  receiver_id?: string;
 }
 
 export interface ModelSwaggerUpdateListingRequest {
@@ -846,17 +847,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/listings/{listingId}/messages
      * @secure
      */
-    getMessages: (listingId: string, params: RequestParams = {}) =>
+    getMessages: (
+      listingId: string,
+      query?: {
+        /** Other User ID (required for sellers) */
+        other_user_id?: string;
+      },
+      params: RequestParams = {}
+    ) =>
       this.request<ModelMessageResponse[], ModelSwaggerErrorResponse>({
         path: `/listings/${listingId}/messages`,
         method: 'GET',
+        query: query,
         secure: true,
         format: 'json',
         ...params,
       }),
 
     /**
-     * @description Sends a message from the authenticated user to the listing seller. Creates a notification for the receiver.
+     * @description Sends a message from the authenticated user. If the sender is the seller, they must provide the receiver_id (the buyer). If the sender is a buyer, the message is sent to the seller.
      *
      * @tags Messages
      * @name SendMessage

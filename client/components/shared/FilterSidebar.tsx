@@ -41,7 +41,7 @@ export default function FilterSidebar() {
   }
 
   const hasFilters = ['condition', 'price_min', 'price_max', 'department'].some((k) =>
-    searchParams.get(k),
+    searchParams.get(k)
   );
 
   return (

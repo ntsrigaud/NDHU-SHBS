@@ -65,8 +65,8 @@ function BookGrid() {
   return (
     <div>
       <p className="mb-4 text-sm text-muted-foreground">
-        <span className="font-semibold text-foreground">{data.total}</span>{' '}
-        book{data.total !== 1 ? 's' : ''} available
+        <span className="font-semibold text-foreground">{data.total}</span> book
+        {data.total !== 1 ? 's' : ''} available
       </p>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {data.listings.map((listing) => (
@@ -83,13 +83,20 @@ export default function MarketplacePage() {
       {/* Hero */}
       <div
         className="relative overflow-hidden px-4 py-14"
-        style={{ background: 'linear-gradient(135deg, hsl(152 52% 20%) 0%, hsl(165 45% 30%) 60%, hsl(152 40% 38%) 100%)' }}
+        style={{
+          background:
+            'linear-gradient(135deg, hsl(152 52% 20%) 0%, hsl(165 45% 30%) 60%, hsl(152 40% 38%) 100%)',
+        }}
       >
         {/* decorative dots */}
-        <div className="pointer-events-none absolute inset-0 opacity-10"
-          style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '28px 28px' }}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}
         />
-        <div className="relative container mx-auto max-w-2xl text-center">
+        <div className="container relative mx-auto max-w-2xl text-center">
           <span className="mb-3 inline-block rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/80 backdrop-blur-sm">
             國立東華大學 · National Dong Hwa University
           </span>

@@ -38,7 +38,7 @@ export default function SearchBar() {
       <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/50" />
       <input
         type="search"
-        className="h-12 w-full rounded-xl border border-white/20 bg-white/15 pl-11 pr-4 text-sm text-white placeholder:text-white/50 backdrop-blur-sm transition-colors focus:border-white/40 focus:bg-white/20 focus:outline-none focus:ring-0"
+        className="h-12 w-full rounded-xl border border-white/20 bg-white/15 pl-11 pr-4 text-sm text-white backdrop-blur-sm transition-colors placeholder:text-white/50 focus:border-white/40 focus:bg-white/20 focus:outline-none focus:ring-0"
         placeholder="Search by title, author, or ISBN…"
         value={value}
         onChange={(e) => setValue(e.target.value)}
