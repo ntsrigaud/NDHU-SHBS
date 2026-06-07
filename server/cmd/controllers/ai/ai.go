@@ -1,30 +1,15 @@
 package ai
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
 	"shbs-server/pkg/model"
+	"shbs-server/pkg/services"
 )
-
-// aiConditionRequest mirrors the AI service's expected payload.
-type aiConditionRequest struct {
-	ImageURLs []string `json:"image_urls"`
-}
-
-// aiConditionResponse mirrors the AI service's response.
-type aiConditionResponse struct {
-	Condition  string  `json:"condition"`
-	Score      float64 `json:"score"`
-	Confidence float64 `json:"confidence"` // some versions use confidence
-}
 
 // AnalyzeCondition proxies an image condition analysis request to the AI
 // microservice. The client sends an image UUID; the server resolves it to a CDN
@@ -60,40 +45,14 @@ func AnalyzeCondition(db *sqlx.DB, c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "image not found"})
 	}
 
-	aiServiceURL := os.Getenv("AI_SERVICE_URL")
-	if aiServiceURL == "" {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "AI service not configured"})
-	}
-
-	payload, _ := json.Marshal(aiConditionRequest{ImageURLs: []string{img.CdnURL}})
-
-	resp, err := http.Post(
-		fmt.Sprintf("%s/analyze/condition", aiServiceURL),
-		"application/json",
-		bytes.NewReader(payload),
-	)
+	aiSvc := services.NewAIService("")
+	res, err := aiSvc.AnalyzeCondition([]string{img.CdnURL})
 	if err != nil {
-		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "AI service unavailable"})
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "AI service returned an error"})
-	}
-
-	var aiResp aiConditionResponse
-	if err := json.NewDecoder(resp.Body).Decode(&aiResp); err != nil {
-		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "invalid response from AI service"})
-	}
-
-	// Normalise: prefer "confidence" field, fall back to "score".
-	confidence := aiResp.Confidence
-	if confidence == 0 {
-		confidence = aiResp.Score
+		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": fmt.Sprintf("AI service error: %v", err)})
 	}
 
 	return c.JSON(model.SwaggerAnalyzeConditionResponse{
-		Condition:  aiResp.Condition,
-		Confidence: confidence,
+		Condition:  res.Condition,
+		Confidence: res.Confidence,
 	})
 }
