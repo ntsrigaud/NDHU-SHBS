@@ -95,6 +95,29 @@ func TestLogger_LogsAndPassesThrough(t *testing.T) {
 	}
 }
 
+func TestLogger_ErrorHandling(t *testing.T) {
+	app := newApp()
+	app.Use(middleware.Logger())
+
+	// Case 1: fiber.Error
+	app.Get("/fiber-error", func(c *fiber.Ctx) error {
+		return fiber.NewError(fiber.StatusForbidden, "forbidden")
+	})
+	resp := do(t, app, httptest.NewRequest(http.MethodGet, "/fiber-error", nil))
+	if resp.StatusCode != http.StatusForbidden {
+		t.Errorf("expected 403, got %d", resp.StatusCode)
+	}
+
+	// Case 2: Generic error
+	app.Get("/generic-error", func(c *fiber.Ctx) error {
+		return errors.New("boom")
+	})
+	resp = do(t, app, httptest.NewRequest(http.MethodGet, "/generic-error", nil))
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Errorf("expected 500, got %d", resp.StatusCode)
+	}
+}
+
 // ── Compressor ────────────────────────────────────────────────────────────────
 
 func TestCompressor_ReturnsOK(t *testing.T) {
