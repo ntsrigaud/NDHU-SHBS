@@ -4,60 +4,65 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 150 20% 10%;
+    /* Backgrounds — warm off-white with a breath of sage */
+    --background: 150 25% 97%;
+    --foreground: 152 30% 8%;
+
     --card: 0 0% 100%;
-    --card-foreground: 150 20% 10%;
+    --card-foreground: 152 30% 8%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 150 20% 10%;
-    /* NDHU forest green */
-    --primary: 152 52% 24%;
+    --popover-foreground: 152 30% 8%;
+
+    /* NDHU forest green — used for interactive elements, not backgrounds */
+    --primary: 152 48% 28%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 150 20% 94%;
-    --secondary-foreground: 152 52% 20%;
-    --muted: 150 15% 95%;
-    --muted-foreground: 150 10% 45%;
-    /* NDHU gold */
-    --accent: 43 74% 49%;
-    --accent-foreground: 152 52% 12%;
-    --destructive: 0 84.2% 60.2%;
+
+    --secondary: 150 30% 92%;
+    --secondary-foreground: 152 40% 18%;
+
+    --muted: 150 20% 93%;
+    --muted-foreground: 150 12% 48%;
+
+    /* NDHU gold — used for prices, highlights, CTAs */
+    --accent: 40 88% 46%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 78% 55%;
     --destructive-foreground: 0 0% 98%;
-    --border: 150 15% 88%;
-    --input: 150 15% 88%;
-    --ring: 152 52% 24%;
-    --radius: 0.5rem;
-    --chart-1: 152 52% 24%;
-    --chart-2: 43 74% 49%;
-    --chart-3: 197 37% 34%;
-    --chart-4: 27 87% 55%;
-    --chart-5: 280 50% 45%;
+
+    --border: 150 18% 88%;
+    --input: 150 18% 88%;
+    --ring: 152 48% 28%;
+    --radius: 0.625rem;
+
+    --chart-1: 152 48% 28%;
+    --chart-2: 40 88% 46%;
+    --chart-3: 197 40% 38%;
+    --chart-4: 27 85% 55%;
+    --chart-5: 280 48% 48%;
   }
 
   .dark {
-    --background: 150 20% 6%;
-    --foreground: 150 10% 95%;
-    --card: 150 20% 9%;
-    --card-foreground: 150 10% 95%;
-    --popover: 150 20% 9%;
-    --popover-foreground: 150 10% 95%;
-    --primary: 152 45% 42%;
+    --background: 152 22% 6%;
+    --foreground: 150 15% 94%;
+    --card: 152 20% 9%;
+    --card-foreground: 150 15% 94%;
+    --popover: 152 20% 9%;
+    --popover-foreground: 150 15% 94%;
+    --primary: 152 42% 44%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 150 20% 14%;
-    --secondary-foreground: 150 10% 90%;
+    --secondary: 150 18% 15%;
+    --secondary-foreground: 150 12% 88%;
     --muted: 150 15% 14%;
-    --muted-foreground: 150 10% 60%;
-    --accent: 43 74% 49%;
-    --accent-foreground: 152 52% 12%;
-    --destructive: 0 62.8% 30.6%;
+    --muted-foreground: 150 10% 58%;
+    --accent: 40 88% 46%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 60% 42%;
     --destructive-foreground: 0 0% 98%;
     --border: 150 15% 18%;
     --input: 150 15% 18%;
-    --ring: 152 45% 42%;
-    --chart-1: 152 45% 42%;
-    --chart-2: 43 74% 49%;
-    --chart-3: 197 37% 44%;
-    --chart-4: 27 87% 60%;
-    --chart-5: 280 50% 55%;
+    --ring: 152 42% 44%;
   }
 }
 
@@ -67,5 +72,20 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .gradient-hero {
+    background: linear-gradient(135deg, hsl(152 52% 20%) 0%, hsl(165 45% 30%) 60%, hsl(152 40% 38%) 100%);
+  }
+  .gradient-card-hover {
+    background: linear-gradient(135deg, hsl(152 48% 28% / 0.06) 0%, hsl(40 88% 46% / 0.04) 100%);
+  }
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(40 88% 46%), hsl(35 95% 52%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }

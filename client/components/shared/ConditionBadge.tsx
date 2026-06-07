@@ -3,9 +3,9 @@ import { Condition } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const styles: Record<Condition, string> = {
-  good: 'bg-green-100 text-green-800 hover:bg-green-100',
-  moderate: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100',
-  poor: 'bg-red-100 text-red-800 hover:bg-red-100',
+  good: 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
+  moderate: 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100',
+  poor: 'bg-rose-100 text-rose-800 border-rose-200 hover:bg-rose-100',
 };
 
 const labels: Record<Condition, string> = {
@@ -14,9 +14,18 @@ const labels: Record<Condition, string> = {
   poor: 'Poor',
 };
 
-export default function ConditionBadge({ condition }: { condition: Condition }) {
+export default function ConditionBadge({
+  condition,
+  className,
+}: {
+  condition: Condition;
+  className?: string;
+}) {
   return (
-    <Badge variant="secondary" className={cn('capitalize', styles[condition])}>
+    <Badge
+      variant="outline"
+      className={cn('border text-[10px] font-semibold capitalize', styles[condition], className)}
+    >
       {labels[condition]}
     </Badge>
   );
