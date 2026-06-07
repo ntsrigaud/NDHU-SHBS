@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useBook } from '@/hooks/useBooks';
 import { useAppSelector } from '@/lib/store';
 import MessageThread from '@/components/shared/MessageThread';
@@ -10,6 +10,8 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function ConversationPage() {
   const { listingId } = useParams<{ listingId: string }>();
+  const searchParams = useSearchParams();
+  const otherUserId = searchParams.get('userId') ?? undefined;
   const { data: listing, isLoading } = useBook(listingId);
   const currentUser = useAppSelector((s) => s.auth.user);
 
@@ -46,7 +48,11 @@ export default function ConversationPage() {
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-hidden rounded-lg border">
-          <MessageThread listingId={listingId} otherUserName={otherUserName} />
+          <MessageThread
+            listingId={listingId}
+            otherUserId={otherUserId}
+            otherUserName={otherUserName}
+          />
         </div>
       )}
     </div>
