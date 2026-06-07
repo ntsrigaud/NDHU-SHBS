@@ -19,12 +19,6 @@ const CONDITIONS = [
   { value: 'poor', label: 'Poor' },
 ];
 
-const SORT_OPTIONS = [
-  { value: 'newest', label: 'Newest first' },
-  { value: 'price_asc', label: 'Price: low to high' },
-  { value: 'price_desc', label: 'Price: high to low' },
-];
-
 export default function FilterSidebar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -45,33 +39,12 @@ export default function FilterSidebar() {
     router.push(pathname);
   }
 
-  const hasFilters = ['condition', 'price_min', 'price_max', 'department', 'sort'].some((k) =>
-    searchParams.get(k)
+  const hasFilters = ['condition', 'price_min', 'price_max', 'department'].some((k) =>
+    searchParams.get(k),
   );
 
   return (
     <aside className="space-y-6">
-      <div className="space-y-2">
-        <Label>Sort</Label>
-        <Select
-          value={searchParams.get('sort') ?? 'newest'}
-          onValueChange={(v: string) => setParam('sort', v)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SORT_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Separator />
-
       <div className="space-y-2">
         <Label>Condition</Label>
         <Select

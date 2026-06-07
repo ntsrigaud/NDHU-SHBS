@@ -13,11 +13,11 @@ function BookGrid() {
   const searchParams = useSearchParams();
 
   const filters: ListingsFilter = {
+    search: searchParams.get('q') ?? undefined,
     department: searchParams.get('department') ?? undefined,
     condition: (searchParams.get('condition') as ListingsFilter['condition']) ?? undefined,
     price_min: searchParams.get('price_min') ? Number(searchParams.get('price_min')) : undefined,
     price_max: searchParams.get('price_max') ? Number(searchParams.get('price_max')) : undefined,
-    sort: (searchParams.get('sort') as ListingsFilter['sort']) ?? 'newest',
     page: searchParams.get('page') ? Number(searchParams.get('page')) : 1,
   };
 

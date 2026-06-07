@@ -409,6 +409,7 @@ export const listingsApi = {
     const response = await executeApiResponse((apiClient) =>
       apiClient.listings.getListings({
         status: 'active',
+        search: filters.search,
         department: filters.department,
         condition: filters.condition,
         price_min: filters.price_min,
