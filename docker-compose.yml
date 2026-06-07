@@ -59,6 +59,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    ports:
+      - "${API_HOST_PORT:-8082}:8080"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=PathPrefix(`/api`) || PathPrefix(`/swagger`) || Path(`/live`) || Path(`/ready`)"
@@ -97,6 +99,8 @@ services:
       - ./client/.env
     depends_on:
       - api
+    ports:
+      - "${CLIENT_HOST_PORT:-3001}:3000"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.client.rule=PathPrefix(`/`)"
