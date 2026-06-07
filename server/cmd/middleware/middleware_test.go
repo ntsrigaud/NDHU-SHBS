@@ -179,6 +179,23 @@ func TestCorsHandler_AllowsVercelPreview(t *testing.T) {
 	}
 }
 
+func TestCorsHandler_MultipleOrigins(t *testing.T) {
+	t.Setenv("FRONTEND_BASE_URL", "http://localhost:3000,https://example.com")
+	app := newApp()
+	app.Use(middleware.CorsHandler())
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	origins := []string{"http://localhost:3000", "https://example.com", "http://127.0.0.1:4000"}
+	for _, origin := range origins {
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("Origin", origin)
+		resp := do(t, app, req)
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("expected 200 for origin %s, got %d", origin, resp.StatusCode)
+		}
+	}
+}
+
 // ── HealthChecks ──────────────────────────────────────────────────────────────
 
 // fakeDB implements the ping interface used by services.Database.
