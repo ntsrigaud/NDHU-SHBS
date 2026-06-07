@@ -121,7 +121,14 @@ export default function LoginPage() {
             </span>
           </div>
 
-          <Button variant="outline" className="w-full" disabled>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+              window.location.href = `${apiBase}/api/v1/auth/sso/login`;
+            }}
+          >
             Sign in with NDHU SSO
           </Button>
 
