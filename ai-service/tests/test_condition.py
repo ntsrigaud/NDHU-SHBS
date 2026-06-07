@@ -31,7 +31,10 @@ def _pred(cls: str, confidence: float) -> dict:
     return {
         "class": cls,
         "confidence": confidence,
-        "x": 100, "y": 100, "width": 50, "height": 50,
+        "x": 100,
+        "y": 100,
+        "width": 50,
+        "height": 50,
         "class_id": 0,
         "detection_id": "abc",
     }
@@ -44,7 +47,10 @@ def client() -> TestClient:
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 
-def test_no_defects_returns_good(client: TestClient, mock_http_client: AsyncMock) -> None:
+
+def test_no_defects_returns_good(
+    client: TestClient, mock_http_client: AsyncMock
+) -> None:
     mock_http_client.post.return_value = _mock_response([])
 
     resp = client.post("/analyze/condition", json={"images_base64": [_TEST_B64]})
@@ -56,7 +62,9 @@ def test_no_defects_returns_good(client: TestClient, mock_http_client: AsyncMock
     assert data["confidence"] == pytest.approx(1.0)
 
 
-def test_severe_defect_returns_poor(client: TestClient, mock_http_client: AsyncMock) -> None:
+def test_severe_defect_returns_poor(
+    client: TestClient, mock_http_client: AsyncMock
+) -> None:
     # tear @ 0.9 → defect = 1.0 × 0.9 = 0.9 → condition "poor", score = 0.1
     mock_http_client.post.return_value = _mock_response([_pred("tear", 0.9)])
 
@@ -73,10 +81,12 @@ def test_label_and_barcode_not_counted_as_defects(
     client: TestClient, mock_http_client: AsyncMock
 ) -> None:
     # label and barcode have weight 0.0 — should not affect defect score
-    mock_http_client.post.return_value = _mock_response([
-        _pred("label", 0.99),
-        _pred("barcode", 0.95),
-    ])
+    mock_http_client.post.return_value = _mock_response(
+        [
+            _pred("label", 0.99),
+            _pred("barcode", 0.95),
+        ]
+    )
 
     resp = client.post("/analyze/condition", json={"images_base64": [_TEST_B64]})
 
@@ -86,7 +96,9 @@ def test_label_and_barcode_not_counted_as_defects(
     assert data["score"] == pytest.approx(1.0)
 
 
-def test_worst_image_score_wins(client: TestClient, mock_http_client: AsyncMock) -> None:
+def test_worst_image_score_wins(
+    client: TestClient, mock_http_client: AsyncMock
+) -> None:
     # Image 1: clean → defect 0.0
     # Image 2: chip @ 0.8 → defect 0.8 → overall "poor"
     mock_http_client.post.side_effect = [
@@ -107,11 +119,15 @@ def test_worst_image_score_wins(client: TestClient, mock_http_client: AsyncMock)
     assert data["confidence"] == pytest.approx(0.9, abs=1e-5)
 
 
-def test_response_schema_always_valid(client: TestClient, mock_http_client: AsyncMock) -> None:
-    mock_http_client.post.return_value = _mock_response([
-        _pred("stain", 0.5),
-        _pred("mark", 0.4),
-    ])
+def test_response_schema_always_valid(
+    client: TestClient, mock_http_client: AsyncMock
+) -> None:
+    mock_http_client.post.return_value = _mock_response(
+        [
+            _pred("stain", 0.5),
+            _pred("mark", 0.4),
+        ]
+    )
 
     resp = client.post("/analyze/condition", json={"images_base64": [_TEST_B64]})
 
@@ -122,10 +138,37 @@ def test_response_schema_always_valid(client: TestClient, mock_http_client: Asyn
     assert 0.0 <= data["confidence"] <= 1.0
 
 
-def test_roboflow_http_error_returns_502(client: TestClient, mock_http_client: AsyncMock) -> None:
+def test_roboflow_http_error_returns_502(
+    client: TestClient, mock_http_client: AsyncMock
+) -> None:
     mock_http_client.post.side_effect = httpx.ConnectError("connection refused")
 
     resp = client.post("/analyze/condition", json={"images_base64": [_TEST_B64]})
 
     assert resp.status_code == 502
     assert resp.json()["detail"] == "AI inference unavailable"
+
+
+def test_condition_via_image_url(
+    client: TestClient, mock_http_client: AsyncMock
+) -> None:
+    # 1. Mock image download
+    image_resp = MagicMock()
+    image_resp.content = b"fake-image-bytes"
+    image_resp.status_code = 200
+    image_resp.raise_for_status = MagicMock()
+
+    mock_http_client.get.return_value = image_resp
+
+    # 2. Mock Roboflow inference
+    mock_http_client.post.return_value = _mock_response([])
+
+    resp = client.post(
+        "/analyze/condition", json={"image_urls": ["http://example.com/book.jpg"]}
+    )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["condition"] == "good"
+    assert mock_http_client.get.called
+    assert mock_http_client.post.called

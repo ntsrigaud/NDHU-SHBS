@@ -1797,11 +1797,17 @@ const docTemplate = `{
                 "ai_confidence": {
                     "type": "number"
                 },
+                "ai_processed": {
+                    "type": "boolean"
+                },
                 "author": {
                     "type": "string"
                 },
                 "condition": {
                     "type": "string"
+                },
+                "condition_score": {
+                    "type": "number"
                 },
                 "course_code": {
                     "type": "string"

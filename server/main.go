@@ -22,6 +22,7 @@ import (
 	"shbs-server/pkg/services"
 	"shbs-server/pkg/util"
 
+	"github.com/go-co-op/gocron/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
 	"github.com/jmoiron/sqlx"
@@ -70,10 +71,18 @@ func main() {
 		log.Println("warn: AWS_BUCKET not set — image uploads disabled")
 	}
 
+	aiSvc := services.NewAIService("")
+	aiWorker := services.NewAIWorker(db, aiSvc)
+
 	scheduler := services.SetupScheduler(6*time.Hour, func() {
 		util.DeleteExpiredTokens(db)
 		util.DeleteExpiredVerificationTokens(db)
 	})
+	// Run AI processing more frequently (every 1 minute for responsive prototype)
+	_, _ = scheduler.NewJob(
+		gocron.DurationJob(1*time.Minute),
+		gocron.NewTask(aiWorker.ProcessPendingListings),
+	)
 	defer scheduler.Shutdown()
 
 	app := fiber.New(fiber.Config{

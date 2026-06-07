@@ -28,6 +28,7 @@ const listingWithImagesByIDQuery = `
 	SELECT 
 		l.id, l.seller_id, l.title, l.author, l.isbn, l.course_code, l.department,
 		l.price, l.condition, l.status, l.description, l.ai_confidence,
+		l.condition_score, l.ai_processed,
 		l.created_at, l.updated_at,
 		u.name AS seller_name,
 		img_avatar.cdn_url AS seller_avatar,
@@ -166,6 +167,7 @@ func GetListings(db *sqlx.DB, c *fiber.Ctx) error {
 		SELECT 
 			l.id, l.seller_id, l.title, l.author, l.isbn, l.course_code, l.department,
 			l.price, l.condition, l.status, l.description, l.ai_confidence,
+			l.condition_score, l.ai_processed,
 			l.created_at, l.updated_at,
 			u.name AS seller_name, 
 			img_avatar.cdn_url AS seller_avatar,
@@ -245,6 +247,7 @@ func GetMyListings(db *sqlx.DB, c *fiber.Ctx) error {
 		SELECT
 			l.id, l.seller_id, l.title, l.author, l.isbn, l.course_code, l.department,
 			l.price, l.condition, l.status, l.description, l.ai_confidence,
+			l.condition_score, l.ai_processed,
 			l.created_at, l.updated_at,
 			u.name AS seller_name,
 			img_avatar.cdn_url AS seller_avatar,
@@ -314,12 +317,12 @@ func CreateListing(db *sqlx.DB, c *fiber.Ctx) error {
 	err = tx.QueryRowx(`
 		INSERT INTO book_listings
 			(id, seller_id, title, author, isbn, course_code, department,
-			 price, condition, status, description)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'active',$10)
+			 price, condition, status, description, ai_processed)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, FALSE)
 		RETURNING *`,
 		uuid.New(), sellerID,
 		req.Title, req.Author, isbn, courseCode, department,
-		req.Price, req.Condition, description,
+		req.Price, req.Condition, model.ListingStatusPending, description,
 	).StructScan(&listing)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "could not create listing")

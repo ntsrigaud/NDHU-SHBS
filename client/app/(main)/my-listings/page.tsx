@@ -12,6 +12,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 const STATUS_LABELS: Record<BookListing['status'], string> = {
   active: 'Active',
+  pending: 'Reviewing',
   reserved: 'Reserved',
   sold: 'Sold',
   delisted: 'Delisted',
@@ -22,6 +23,7 @@ const STATUS_VARIANTS: Record<
   'default' | 'secondary' | 'destructive' | 'outline'
 > = {
   active: 'default',
+  pending: 'secondary',
   reserved: 'secondary',
   sold: 'outline',
   delisted: 'destructive',
@@ -75,7 +77,14 @@ export default function MyListingsPage() {
           {listings.map((listing) => (
             <div key={listing.id} className="flex items-center gap-4 p-4">
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{listing.title}</p>
+                <div className="flex items-center gap-2">
+                  <p className="truncate font-medium">{listing.title}</p>
+                  {listing.status === 'pending' && (
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
+                      AI Processing
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">{listing.author}</p>
               </div>
               <span className="font-medium">NT${listing.price.toFixed(0)}</span>

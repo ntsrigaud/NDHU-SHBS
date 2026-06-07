@@ -6,6 +6,8 @@ import { useBook } from '@/hooks/useBooks';
 import { useUpdateListing } from '@/hooks/useListings';
 import ListingForm from '@/components/shared/ListingForm';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Loader2 } from 'lucide-react';
 
 export default function EditListingPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,20 +34,36 @@ export default function EditListingPage() {
 
   return (
     <div className="container mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold">Edit listing</h1>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Edit listing</h1>
+        {listing.status === 'pending' && (
+          <Alert className="mt-4 border-secondary bg-secondary/10">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <AlertTitle>AI processing in progress</AlertTitle>
+            <AlertDescription>
+              We&apos;re extracting book details and analyzing condition. These fields will be
+              updated automatically once ready.
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+
       <ListingForm
         defaultValues={listing}
         onSubmit={(values) =>
-          updateListing(values, {
-            onSuccess: () => {
-              toast.success('Listing updated');
-              router.push('/my-listings');
-            },
-            onError: (err) => toast.error(err.message ?? 'Failed to update listing'),
-          })
+          updateListing(
+            { ...values, status: 'active' }, // Set to active once reviewed/edited
+            {
+              onSuccess: () => {
+                toast.success('Listing updated and published!');
+                router.push('/my-listings');
+              },
+              onError: (err) => toast.error(err.message ?? 'Failed to update listing'),
+            }
+          )
         }
         isPending={isPending}
-        submitLabel="Save changes"
+        submitLabel={listing.status === 'pending' ? 'Review and publish' : 'Save changes'}
       />
     </div>
   );

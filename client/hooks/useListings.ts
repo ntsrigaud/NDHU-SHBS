@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { listingsApi } from '@/lib/api';
-import { Condition } from '@/lib/types';
+import { Condition, ListingStatus } from '@/lib/types';
 
 export interface CreateListingPayload {
   title: string;
@@ -12,6 +12,7 @@ export interface CreateListingPayload {
   department?: string;
   price: number;
   condition: Condition;
+  status?: ListingStatus;
   description?: string;
   image_ids?: string[];
 }

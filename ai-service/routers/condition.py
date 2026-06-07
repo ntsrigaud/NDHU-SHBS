@@ -17,6 +17,7 @@ Scoring:
 
 from __future__ import annotations
 
+import base64
 import logging
 import os
 from typing import Any
@@ -34,16 +35,16 @@ router = APIRouter(prefix="/analyze", tags=["condition"])
 # label and barcode are book identifiers, not physical defects — weight 0.0.
 # annotations/crease/nick/spot have limited training data (faded UI boxes) — weight 0.3.
 _SEVERITY: dict[str, float] = {
-    "tear":        1.0,
-    "chip":        1.0,
-    "stain":       0.6,
-    "mark":        0.5,
-    "spot":        0.3,
+    "tear": 1.0,
+    "chip": 1.0,
+    "stain": 0.6,
+    "mark": 0.5,
+    "spot": 0.3,
     "annotations": 0.3,
-    "crease":      0.3,
-    "nick":        0.3,
-    "label":       0.0,
-    "barcode":     0.0,
+    "crease": 0.3,
+    "nick": 0.3,
+    "label": 0.0,
+    "barcode": 0.0,
 }
 
 
@@ -66,19 +67,46 @@ def _score_predictions(predictions: list[dict[str, Any]]) -> tuple[float, float]
 
 
 @router.post("/condition", response_model=ConditionResponse)
-async def analyze_condition(body: ConditionRequest, request: Request) -> ConditionResponse:
+async def analyze_condition(
+    body: ConditionRequest, request: Request
+) -> ConditionResponse:
     """Classify the physical condition of a used textbook."""
     api_key = os.getenv("ROBOFLOW_API_KEY", "")
-    endpoint = os.getenv(
+    model_endpoint = os.getenv(
         "MODEL_ENDPOINT",
-        "https://detect.roboflow.com/book-defect-detection/10",
+        "book-defect-detection/10",
     )
+
+    # Ensure the endpoint is a full URL. If it's just "model/version",
+    # prepend the Roboflow base URL.
+    if model_endpoint.startswith("http"):
+        endpoint = model_endpoint
+    else:
+        endpoint = f"https://detect.roboflow.com/{model_endpoint.lstrip('/')}"
+
     client: httpx.AsyncClient = request.app.state.http_client
+
+    images_base64 = body.images_base64 or []
+    image_urls = body.image_urls or []
+
+    # We need base64 for Roboflow API
+    all_b64: list[str] = list(images_base64)
+    for url in image_urls:
+        try:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            # Convert bytes to base64
+            all_b64.append(base64.b64encode(resp.content).decode("utf-8"))
+        except httpx.HTTPError as exc:
+            logger.warning("Could not download image from %s: %s", url, exc)
+
+    if not all_b64:
+        raise HTTPException(status_code=400, detail="No valid images provided")
 
     per_image_defect: list[float] = []
     per_image_confidence: list[float] = []
 
-    for image_b64 in body.images_base64:
+    for image_b64 in all_b64:
         # Roboflow's hosted API wants the raw base64 only. Strip a data-URI
         # prefix (e.g. "data:image/jpeg;base64,") if the caller included one,
         # plus any surrounding whitespace/newlines — otherwise Roboflow 400s.
@@ -100,7 +128,9 @@ async def analyze_condition(body: ConditionRequest, request: Request) -> Conditi
             data = resp.json()
         except httpx.HTTPError as exc:
             logger.error("Roboflow inference failed: %s", exc)
-            raise HTTPException(status_code=502, detail="AI inference unavailable") from exc
+            raise HTTPException(
+                status_code=502, detail="AI inference unavailable"
+            ) from exc
 
         defect, conf = _score_predictions(data.get("predictions", []))
         per_image_defect.append(defect)
