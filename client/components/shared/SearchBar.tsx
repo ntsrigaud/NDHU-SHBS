@@ -8,9 +8,18 @@ export default function SearchBar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [value, setValue] = useState(searchParams.get('q') ?? '');
+  const urlQ = searchParams.get('q') ?? '';
+  const [value, setValue] = useState(urlQ);
 
+  // Sync local state when the URL's q param changes externally
+  // (e.g. clicking the logo, browser back/forward, clearing filters)
   useEffect(() => {
+    setValue(urlQ);
+  }, [urlQ]);
+
+  // Debounce: push to URL only when the user has typed something different
+  useEffect(() => {
+    if (value === urlQ) return; // nothing changed — don't push
     const timer = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
       if (value) {
@@ -22,7 +31,7 @@ export default function SearchBar() {
       router.push(`${pathname}?${params}`);
     }, 350);
     return () => clearTimeout(timer);
-  }, [value, pathname, router, searchParams]);
+  }, [value, urlQ, pathname, router, searchParams]);
 
   return (
     <div className="relative">
