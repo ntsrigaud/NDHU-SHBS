@@ -4,20 +4,21 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { messagesApi, type Conversation, type Message } from '@/lib/api';
 import { useAppSelector } from '@/lib/store';
 
-export function useMessages(listingId: string) {
+export function useMessages(listingId: string, otherUserId?: string) {
   return useQuery({
-    queryKey: ['messages', listingId],
-    queryFn: () => messagesApi.getMessages(listingId),
+    queryKey: ['messages', listingId, otherUserId],
+    queryFn: () => messagesApi.getMessages(listingId, otherUserId),
     refetchInterval: 5000,
     enabled: !!listingId,
   });
 }
 
-export function useSendMessage(listingId: string) {
+export function useSendMessage(listingId: string, receiverId?: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: string) => messagesApi.sendMessage(listingId, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['messages', listingId] }),
+    mutationFn: (body: string) => messagesApi.sendMessage(listingId, body, receiverId),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ['messages', listingId, receiverId] }),
   });
 }
 
