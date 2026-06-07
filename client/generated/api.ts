@@ -33,8 +33,10 @@ export interface ModelImageResponse {
 
 export interface ModelListingWithImages {
   ai_confidence?: number;
+  ai_processed?: boolean;
   author?: string;
   condition?: string;
+  condition_score?: number;
   course_code?: string;
   created_at?: string;
   department?: string;
