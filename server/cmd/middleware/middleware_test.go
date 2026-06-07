@@ -418,3 +418,17 @@ func TestRateLimiter_LocalhostBypassed(t *testing.T) {
 		t.Errorf("unexpected status %d", resp.StatusCode)
 	}
 }
+
+func TestRateLimiter_CustomKeyGenerator(t *testing.T) {
+	app := newApp()
+	app.Use(middleware.RateLimiter())
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("X-Forwarded-For", "1.2.3.4")
+	resp := do(t, app, req)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected 200, got %d", resp.StatusCode)
+	}
+}
+
