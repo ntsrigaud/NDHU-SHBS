@@ -432,3 +432,24 @@ func TestRateLimiter_CustomKeyGenerator(t *testing.T) {
 	}
 }
 
+func TestRateLimiter_LimitReached(t *testing.T) {
+	app := newApp()
+	// We can't easily change the config of the middleware returned by RateLimiter()
+	// without modifying the production code to accept a config, but we can
+	// just blast it with requests.
+	app.Use(middleware.RateLimiter())
+	app.Get("/", func(c *fiber.Ctx) error { return c.SendString("ok") })
+
+	// The limit is 100.
+	for i := 0; i < 100; i++ {
+		resp := do(t, app, httptest.NewRequest(http.MethodGet, "/", nil))
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("request %d failed: expected 200, got %d", i, resp.StatusCode)
+		}
+	}
+
+	resp := do(t, app, httptest.NewRequest(http.MethodGet, "/", nil))
+	if resp.StatusCode != http.StatusTooManyRequests {
+		t.Errorf("expected 429, got %d", resp.StatusCode)
+	}
+}
