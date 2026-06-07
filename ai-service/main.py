@@ -17,6 +17,7 @@ import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -38,10 +39,23 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Load ML models during startup; release resources on shutdown."""
     global _model_loaded
     logger.info("AI service starting — loading models…")
-    # TODO (Phase 4): initialize Roboflow client / load weights here
+    app.state.http_client = httpx.AsyncClient(timeout=30.0)
+
+    # Warm the OCR engine off the event loop so the first request isn't slow.
+    from fastapi.concurrency import run_in_threadpool
+
+    from routers.metadata import prewarm_ocr
+
+    try:
+        await run_in_threadpool(prewarm_ocr)
+    except Exception as exc:  # noqa: BLE001 — never let OCR warmup crash startup
+        logger.warning("OCR engine warmup failed (will lazy-load on demand): %s", exc)
+
     _model_loaded = True
     logger.info("Models ready")
     yield
+    await app.state.http_client.aclose()
+    _model_loaded = False
     logger.info("AI service shutting down")
 
 
@@ -50,7 +64,13 @@ app = FastAPI(
     version="0.1.0",
     description="Internal AI service for book metadata extraction and condition classification.",
     lifespan=lifespan,
+    root_path="/ai",
 )
+
+# http_client is created in the lifespan (production) or injected by tests
+# (tests/conftest.py). Kept as None at import time so no client is ever created
+# and then discarded unclosed.
+app.state.http_client = None
 
 # CORS is restricted to the Docker bridge network (Go API server only).
 # The wildcard below is safe because Traefik never routes /ai from external
