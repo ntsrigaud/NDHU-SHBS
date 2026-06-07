@@ -1,5 +1,5 @@
 export type Condition = 'good' | 'moderate' | 'poor';
-export type ListingStatus = 'active' | 'reserved' | 'sold' | 'delisted';
+export type ListingStatus = 'active' | 'pending' | 'reserved' | 'sold' | 'delisted';
 
 export interface ListingImage {
   id: string;
@@ -22,6 +22,8 @@ export interface BookListing {
   status: ListingStatus;
   description: string | null;
   ai_confidence: number | null;
+  condition_score: number | null;
+  ai_processed: boolean;
   created_at: string;
   updated_at: string;
   images: ListingImage[];
