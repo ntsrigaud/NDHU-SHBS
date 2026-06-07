@@ -19,7 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const NOTIFICATION_LINKS: Record<string, (payload: Record<string, unknown>) => string> = {
-  new_message: (p) => `/messages/${p.listing_id}`,
+  new_message: (p) => `/messages/${p.listing_id}${p.sender_id ? `?userId=${p.sender_id}` : ''}`,
   order_confirmed: (_p) => `/orders`,
   listing_sold: (p) => `/my-listings/${p.listing_id}/edit`,
 };
