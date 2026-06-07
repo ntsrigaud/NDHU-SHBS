@@ -39,11 +39,11 @@ export interface PaginatedResponse<T> {
 }
 
 export interface ListingsFilter {
+  search?: string;
   department?: string;
   condition?: Condition;
   price_min?: number;
   price_max?: number;
-  sort?: 'price_asc' | 'price_desc' | 'newest';
   page?: number;
   limit?: number;
 }
